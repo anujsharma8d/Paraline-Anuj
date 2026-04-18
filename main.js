@@ -1,9 +1,15 @@
-const { app, BrowserWindow, ipcMain, screen } = require("electron");
+const { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage, screen } = require("electron");
+const path = require("path");
 const { createAudioBridge } = require("./audioBridge");
+const { createSettingsStore } = require("./settingsStore");
 
 let overlayWindow;
 let audioBridge;
 let fakeTimer;
+let tray;
+let isPaused = false;
+let settingsStore;
+let visualizerSettings;
 
 function createOverlayWindow() {
   const { bounds } = screen.getPrimaryDisplay();
@@ -26,7 +32,7 @@ function createOverlayWindow() {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
-      preload: require("path").join(__dirname, "preload.js")
+      preload: path.join(__dirname, "preload.js")
     }
   });
 
@@ -34,6 +40,11 @@ function createOverlayWindow() {
   overlayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   overlayWindow.setIgnoreMouseEvents(true, { forward: true });
   overlayWindow.loadFile("index.html");
+  overlayWindow.webContents.on("did-finish-load", () => {
+    setTimeout(() => {
+      sendVisualizerSettings();
+    }, 100);
+  });
 
   overlayWindow.on("closed", () => {
     overlayWindow = null;
@@ -41,6 +52,10 @@ function createOverlayWindow() {
 }
 
 function sendAudioLevel(value, source) {
+  if (isPaused) {
+    return;
+  }
+
   if (!overlayWindow || overlayWindow.isDestroyed()) {
     return;
   }
@@ -49,6 +64,37 @@ function sendAudioLevel(value, source) {
     value,
     source
   });
+}
+
+function getRendererSettings() {
+  return {
+    ...visualizerSettings,
+    paused: isPaused
+  };
+}
+
+function sendVisualizerSettings() {
+  if (!overlayWindow || overlayWindow.isDestroyed()) {
+    return;
+  }
+
+  overlayWindow.webContents.send("visualizer-settings", getRendererSettings());
+}
+
+function updateSettings(nextSettings) {
+  visualizerSettings = settingsStore.save({
+    ...visualizerSettings,
+    ...nextSettings
+  });
+
+  sendVisualizerSettings();
+  refreshTrayMenu();
+}
+
+function togglePaused() {
+  isPaused = !isPaused;
+  sendVisualizerSettings();
+  refreshTrayMenu();
 }
 
 function startSimulatedAudioFallback() {
@@ -77,18 +123,96 @@ function resizeOverlayToPrimaryDisplay() {
   overlayWindow.setBounds(bounds);
 }
 
-app.whenReady().then(() => {
-  createOverlayWindow();
-  audioBridge = createAudioBridge((value) => {
-    stopSimulatedAudioFallback();
-    sendAudioLevel(value, "helper");
-  });
-  audioBridge.start();
-  startSimulatedAudioFallback();
+function createTrayIcon() {
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+      <rect width="64" height="64" rx="14" fill="#0e1a24"/>
+      <path d="M12 40C18 40 18 24 24 24C30 24 30 48 36 48C42 48 42 18 52 18" fill="none" stroke="#8ee2ff" stroke-width="5" stroke-linecap="round"/>
+      <path d="M12 46C18 46 18 34 24 34C30 34 30 54 36 54C42 54 42 28 52 28" fill="none" stroke="#ffd2eb" stroke-width="3" stroke-linecap="round" opacity="0.9"/>
+    </svg>
+  `;
 
-  screen.on("display-metrics-changed", resizeOverlayToPrimaryDisplay);
-  screen.on("display-added", resizeOverlayToPrimaryDisplay);
-  screen.on("display-removed", resizeOverlayToPrimaryDisplay);
+  return nativeImage
+    .createFromDataURL(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`)
+    .resize({ width: 16, height: 16 });
+}
+
+function buildThemeMenuItems() {
+  return ["blue", "purple", "warm"].map((themeName) => ({
+    label: themeName[0].toUpperCase() + themeName.slice(1),
+    type: "radio",
+    checked: visualizerSettings.theme === themeName,
+    click: () => updateSettings({ theme: themeName })
+  }));
+}
+
+function buildSensitivityMenuItems() {
+  const options = [
+    { label: "Low", value: 2 },
+    { label: "Medium", value: 3.2 },
+    { label: "High", value: 4.8 }
+  ];
+
+  return options.map((option) => ({
+    label: option.label,
+    type: "radio",
+    checked: visualizerSettings.sensitivity === option.value,
+    click: () => updateSettings({ sensitivity: option.value })
+  }));
+}
+
+function buildEdgeModeMenuItems() {
+  return ["top", "bottom", "both"].map((edgeMode) => ({
+    label: edgeMode[0].toUpperCase() + edgeMode.slice(1),
+    type: "radio",
+    checked: visualizerSettings.edgeMode === edgeMode,
+    click: () => updateSettings({ edgeMode })
+  }));
+}
+
+function refreshTrayMenu() {
+  if (!tray) {
+    return;
+  }
+
+  const menu = Menu.buildFromTemplate([
+    {
+      label: isPaused ? "Resume Visualizer" : "Pause Visualizer",
+      click: () => togglePaused()
+    },
+    {
+      label: "Theme",
+      submenu: buildThemeMenuItems()
+    },
+    {
+      label: "Sensitivity",
+      submenu: buildSensitivityMenuItems()
+    },
+    {
+      label: "Edge Mode",
+      submenu: buildEdgeModeMenuItems()
+    },
+    { type: "separator" },
+    {
+      label: "Quit App",
+      click: () => app.quit()
+    }
+  ]);
+
+  tray.setContextMenu(menu);
+  tray.setToolTip("Paraline Visualizer");
+}
+
+function createTray() {
+  tray = new Tray(createTrayIcon());
+  refreshTrayMenu();
+}
+
+app.whenReady().then(() => {
+  console.log("[debug] app.whenReady");
+  settingsStore = createSettingsStore(app.getPath("userData"));
+  visualizerSettings = settingsStore.save(settingsStore.load());
+  console.log("[debug] loaded settings", visualizerSettings);
 
   ipcMain.handle("audio-bridge-status", () => {
     if (!audioBridge) {
@@ -101,10 +225,48 @@ app.whenReady().then(() => {
     return audioBridge.getStatus();
   });
 
+  ipcMain.handle("visualizer-settings:get", () => {
+    return getRendererSettings();
+  });
+
+  createOverlayWindow();
+  console.log("[debug] overlay window created");
+  createTray();
+  sendVisualizerSettings();
+
+  audioBridge = createAudioBridge((value) => {
+    stopSimulatedAudioFallback();
+    sendAudioLevel(value, "helper");
+  });
+  audioBridge.start();
+  startSimulatedAudioFallback();
+
+  screen.on("display-metrics-changed", resizeOverlayToPrimaryDisplay);
+  screen.on("display-added", resizeOverlayToPrimaryDisplay);
+  screen.on("display-removed", resizeOverlayToPrimaryDisplay);
+
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createOverlayWindow();
     }
+  });
+});
+
+app.on("web-contents-created", (_event, contents) => {
+  contents.on("did-finish-load", () => {
+    console.log("[debug] webContents did-finish-load");
+  });
+
+  contents.on("did-fail-load", (_loadEvent, errorCode, errorDescription) => {
+    console.log("[debug] webContents did-fail-load", errorCode, errorDescription);
+  });
+
+  contents.on("render-process-gone", (_goneEvent, details) => {
+    console.log("[debug] render-process-gone", details);
+  });
+
+  contents.on("console-message", (_consoleEvent, level, message, line, sourceId) => {
+    console.log("[renderer]", { level, message, line, sourceId });
   });
 });
 
