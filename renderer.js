@@ -28,13 +28,35 @@ let edgeGradient;
 let lastRainbowMetricsAt = 0;
 let flowTravelDistance = 0;
 let visualizerState = {
-  sensitivity: 3.2,
-  theme: "blue",
-  edgeMode: "bottom",
+  selectedTheme: "ambientWave",
+  ambientWave: {
+    tone: "blue",
+    sensitivity: "medium",
+    edgeMode: "bottom",
+    glowStrength: "medium"
+  },
+  reactiveBorder: {
+    colorStyle: "rainbow",
+    intensity: "medium",
+    borderThickness: "thin",
+    glowStrength: "medium"
+  },
+  flowBorder: {
+    direction: "clockwise",
+    speedMode: "balanced",
+    segmentLength: "medium",
+    glowStrength: "medium",
+    colorStyle: "rainbow"
+  },
   paused: false
 };
 
-const THEMES = {
+const TRANSPARENT_HAZE = {
+  hazeTop: "rgba(0, 0, 0, 0)",
+  hazeBottom: "rgba(0, 0, 0, 0)"
+};
+
+const AMBIENT_TONES = {
   blue: {
     topLine: "rgba(145, 220, 255, 0.34)",
     topGlow: "rgba(120, 205, 255, 0.12)",
@@ -79,6 +101,155 @@ const debugEnabled = params.get("debug") === "1";
 
 function clamp01(value) {
   return Math.max(0, Math.min(1, value));
+}
+
+function getAmbientWaveSettings() {
+  return visualizerState.ambientWave || {};
+}
+
+function getReactiveBorderSettings() {
+  return visualizerState.reactiveBorder || {};
+}
+
+function getFlowBorderSettings() {
+  return visualizerState.flowBorder || {};
+}
+
+function getGlowMultiplier(strength) {
+  if (strength === "soft") {
+    return 0.75;
+  }
+
+  if (strength === "strong") {
+    return 1.35;
+  }
+
+  return 1;
+}
+
+function getAmbientTonePalette() {
+  const ambientSettings = getAmbientWaveSettings();
+  return AMBIENT_TONES[ambientSettings.tone] || AMBIENT_TONES.blue;
+}
+
+function getReactiveBorderStyle() {
+  const reactiveSettings = getReactiveBorderSettings();
+  return REACTIVE_BORDER_STYLES[reactiveSettings.colorStyle] || REACTIVE_BORDER_STYLES.rainbow;
+}
+
+function getFlowBorderStyle() {
+  const flowSettings = getFlowBorderSettings();
+  return FLOW_BORDER_STYLES[flowSettings.colorStyle] || FLOW_BORDER_STYLES.rainbow;
+}
+
+function getAmbientSensitivityMultiplier() {
+  const sensitivity = getAmbientWaveSettings().sensitivity;
+
+  if (sensitivity === "low") {
+    return 2;
+  }
+
+  if (sensitivity === "high") {
+    return 4.8;
+  }
+
+  return 3.2;
+}
+
+function getReactiveIntensityMultiplier() {
+  const intensity = getReactiveBorderSettings().intensity;
+
+  if (intensity === "low") {
+    return 0.82;
+  }
+
+  if (intensity === "high") {
+    return 1.26;
+  }
+
+  return 1;
+}
+
+function getReactiveInputMultiplier() {
+  const intensity = getReactiveBorderSettings().intensity;
+
+  if (intensity === "low") {
+    return 1.6;
+  }
+
+  if (intensity === "high") {
+    return 3.4;
+  }
+
+  return 2.4;
+}
+
+function getFlowAudioMultiplier() {
+  const speedMode = getFlowBorderSettings().speedMode;
+
+  if (speedMode === "calm") {
+    return 1.2;
+  }
+
+  if (speedMode === "energetic") {
+    return 1.8;
+  }
+
+  return 1.5;
+}
+
+function getFlowDirectionValue() {
+  return getFlowBorderSettings().direction === "anticlockwise" ? -1 : 1;
+}
+
+function getFlowSegmentLength() {
+  const segmentLength = getFlowBorderSettings().segmentLength;
+
+  if (segmentLength === "short") {
+    return 14;
+  }
+
+  if (segmentLength === "long") {
+    return 28;
+  }
+
+  return 18;
+}
+
+function getFlowSpeedProfile() {
+  const speedMode = getFlowBorderSettings().speedMode;
+
+  if (speedMode === "calm") {
+    return { base: 100, boost: 280 };
+  }
+
+  if (speedMode === "energetic") {
+    return { base: 220, boost: 620 };
+  }
+
+  return { base: 150, boost: 460 };
+}
+
+function getActiveAudioMultiplier() {
+  if (visualizerState.selectedTheme === "reactiveBorder") {
+    return getReactiveInputMultiplier();
+  }
+
+  if (visualizerState.selectedTheme === "flowBorder") {
+    return getFlowAudioMultiplier();
+  }
+
+  return getAmbientSensitivityMultiplier();
+}
+
+function resolveAnimatedColor(style, normalizedDistance, animationOffset, opacity, lightnessBoost = 0) {
+  if (style.mode === "rainbow") {
+    return `hsla(${normalizedDistance * 360 + animationOffset}, ${style.saturation}%, ${style.lightness + lightnessBoost}%, ${opacity})`;
+  }
+
+  const hueBlend = Math.sin(normalizedDistance * Math.PI * 2 + animationOffset * 0.025) * 0.5 + 0.5;
+  const hue = style.hueA + (style.hueB - style.hueA) * hueBlend;
+  return `hsla(${hue}, ${style.saturation}%, ${style.lightness + lightnessBoost}%, ${opacity})`;
 }
 
 function rebuildCachedPaint() {
