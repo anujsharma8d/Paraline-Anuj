@@ -1,8 +1,6 @@
 const canvas = document.getElementById("visualizer");
 const context = canvas.getContext("2d");
 
-console.log("[debug] renderer loaded");
-
 const TARGET_FPS = 36;
 const FRAME_INTERVAL = 1000 / TARGET_FPS;
 const FLOW_TARGET_FPS = 60;
@@ -25,7 +23,6 @@ let debugPanel;
 let lastDebugPaintAt = 0;
 let lastFrameAt = 0;
 let edgeGradient;
-let lastRainbowMetricsAt = 0;
 let flowTravelDistance = 0;
 let visualizerState = {
   selectedTheme: "ambientWave",
@@ -334,7 +331,6 @@ function resizeCanvas() {
   canvas.height = Math.floor(height * deviceScale);
   context.setTransform(deviceScale, 0, 0, deviceScale, 0, 0);
   rebuildCachedPaint();
-  console.log("[debug] resizeCanvas", { width, height, deviceScale });
 }
 
 function updateAudioLevel(now) {
@@ -452,20 +448,6 @@ function drawReactiveBorder() {
   const hueOffset = time * speed;
   const glowBlur = (7 + smoothedLevel * 10) * glowMultiplier;
   const opacity = 0.54 + smoothedLevel * 0.18 * intensityMultiplier;
-
-  if (performance.now() - lastRainbowMetricsAt > 1000) {
-    lastRainbowMetricsAt = performance.now();
-    console.log("[debug] reactive border metrics", {
-      width,
-      height,
-      left,
-      top,
-      right,
-      bottom,
-      thickness,
-      edgeOffset
-    });
-  }
 
   context.globalAlpha = 1;
   context.lineCap = "round";
@@ -696,12 +678,7 @@ function applySettings(nextSettings) {
   }
 
   rebuildCachedPaint();
-  console.log("[debug] applySettings", visualizerState);
 }
-
-window.addEventListener("error", (event) => {
-  console.log("[debug] renderer error", event.message);
-});
 
 window.addEventListener("resize", resizeCanvas);
 
