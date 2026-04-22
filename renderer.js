@@ -29,6 +29,11 @@ const {
   drawSideBars
 } = window.ParalineSideBars;
 
+const {
+  getFlatRipplesAudioMultiplier,
+  drawFlatRipples
+} = window.ParalineFlatRipples;
+
 const TARGET_FPS = 36;
 const FRAME_INTERVAL = 1000 / TARGET_FPS;
 const FLOW_TARGET_FPS = 60;
@@ -77,6 +82,12 @@ let visualizerState = {
     sensitivity: "medium",
     barDensity: "medium"
   },
+  flatRipples: {
+    mode: "sideRipples",
+    intensity: "medium",
+    colorStyle: "blue",
+    speed: "calm"
+  },
   paused: false
 };
 
@@ -99,6 +110,10 @@ function getSideBarsSettings() {
   return visualizerState.sideBars || {};
 }
 
+function getFlatRipplesSettings() {
+  return visualizerState.flatRipples || {};
+}
+
 function getActiveAudioMultiplier() {
   if (visualizerState.selectedTheme === "reactiveBorder") {
     return getReactiveInputMultiplier(getReactiveBorderSettings());
@@ -110,6 +125,10 @@ function getActiveAudioMultiplier() {
 
   if (visualizerState.selectedTheme === "sideBars") {
     return getSideBarsAudioMultiplier(getSideBarsSettings());
+  }
+
+  if (visualizerState.selectedTheme === "flatRipples") {
+    return getFlatRipplesAudioMultiplier(getFlatRipplesSettings());
   }
 
   return getAmbientSensitivityMultiplier(getAmbientWaveSettings());
@@ -263,6 +282,15 @@ function renderFrame(now) {
       smoothedLevel,
       settings: getSideBarsSettings()
     });
+  } else if (visualizerState.selectedTheme === "flatRipples") {
+    drawFlatRipples({
+      context,
+      width,
+      height,
+      time,
+      smoothedLevel,
+      settings: getFlatRipplesSettings()
+    });
   } else {
     drawAmbientWave({
       context,
@@ -300,10 +328,14 @@ function applySettings(nextSettings) {
     sideBars: {
       ...visualizerState.sideBars,
       ...(nextSettings?.sideBars || {})
+    },
+    flatRipples: {
+      ...visualizerState.flatRipples,
+      ...(nextSettings?.flatRipples || {})
     }
   };
 
-  if (!["ambientWave", "reactiveBorder", "flowBorder", "sideBars"].includes(visualizerState.selectedTheme)) {
+  if (!["ambientWave", "reactiveBorder", "flowBorder", "sideBars", "flatRipples"].includes(visualizerState.selectedTheme)) {
     visualizerState.selectedTheme = "ambientWave";
   }
 
@@ -373,6 +405,22 @@ function applySettings(nextSettings) {
 
   if (!["low", "medium", "high"].includes(visualizerState.sideBars.barDensity)) {
     visualizerState.sideBars.barDensity = "medium";
+  }
+
+  if (!["sideRipples", "flatRipples"].includes(visualizerState.flatRipples.mode)) {
+    visualizerState.flatRipples.mode = "sideRipples";
+  }
+
+  if (!["low", "medium", "high"].includes(visualizerState.flatRipples.intensity)) {
+    visualizerState.flatRipples.intensity = "medium";
+  }
+
+  if (!["red", "blue", "white", "multicolor"].includes(visualizerState.flatRipples.colorStyle)) {
+    visualizerState.flatRipples.colorStyle = "blue";
+  }
+
+  if (!["calm", "balanced", "energetic"].includes(visualizerState.flatRipples.speed)) {
+    visualizerState.flatRipples.speed = "calm";
   }
 
   rebuildCachedPaint();
