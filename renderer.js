@@ -24,6 +24,11 @@ const {
   drawFlowBorder
 } = window.ParalineFlowBorder;
 
+const {
+  getSideBarsAudioMultiplier,
+  drawSideBars
+} = window.ParalineSideBars;
+
 const TARGET_FPS = 36;
 const FRAME_INTERVAL = 1000 / TARGET_FPS;
 const FLOW_TARGET_FPS = 60;
@@ -66,6 +71,12 @@ let visualizerState = {
     glowStrength: "medium",
     colorStyle: "rainbow"
   },
+  sideBars: {
+    colorStyle: "multicolor",
+    barThickness: "thick",
+    sensitivity: "medium",
+    barDensity: "medium"
+  },
   paused: false
 };
 
@@ -84,6 +95,10 @@ function getFlowBorderSettings() {
   return visualizerState.flowBorder || {};
 }
 
+function getSideBarsSettings() {
+  return visualizerState.sideBars || {};
+}
+
 function getActiveAudioMultiplier() {
   if (visualizerState.selectedTheme === "reactiveBorder") {
     return getReactiveInputMultiplier(getReactiveBorderSettings());
@@ -91,6 +106,10 @@ function getActiveAudioMultiplier() {
 
   if (visualizerState.selectedTheme === "flowBorder") {
     return getFlowAudioMultiplier(getFlowBorderSettings());
+  }
+
+  if (visualizerState.selectedTheme === "sideBars") {
+    return getSideBarsAudioMultiplier(getSideBarsSettings());
   }
 
   return getAmbientSensitivityMultiplier(getAmbientWaveSettings());
@@ -235,6 +254,15 @@ function renderFrame(now) {
       flowTravelDistance,
       settings: getFlowBorderSettings()
     });
+  } else if (visualizerState.selectedTheme === "sideBars") {
+    drawSideBars({
+      context,
+      width,
+      height,
+      time,
+      smoothedLevel,
+      settings: getSideBarsSettings()
+    });
   } else {
     drawAmbientWave({
       context,
@@ -268,10 +296,14 @@ function applySettings(nextSettings) {
     flowBorder: {
       ...visualizerState.flowBorder,
       ...(nextSettings?.flowBorder || {})
+    },
+    sideBars: {
+      ...visualizerState.sideBars,
+      ...(nextSettings?.sideBars || {})
     }
   };
 
-  if (!["ambientWave", "reactiveBorder", "flowBorder"].includes(visualizerState.selectedTheme)) {
+  if (!["ambientWave", "reactiveBorder", "flowBorder", "sideBars"].includes(visualizerState.selectedTheme)) {
     visualizerState.selectedTheme = "ambientWave";
   }
 
@@ -325,6 +357,22 @@ function applySettings(nextSettings) {
 
   if (!["rainbow", "cool", "warm"].includes(visualizerState.flowBorder.colorStyle)) {
     visualizerState.flowBorder.colorStyle = "rainbow";
+  }
+
+  if (!["white", "yellow", "aqua", "multicolor"].includes(visualizerState.sideBars.colorStyle)) {
+    visualizerState.sideBars.colorStyle = "multicolor";
+  }
+
+  if (!["thin", "medium", "thick"].includes(visualizerState.sideBars.barThickness)) {
+    visualizerState.sideBars.barThickness = "thick";
+  }
+
+  if (!["low", "medium", "high"].includes(visualizerState.sideBars.sensitivity)) {
+    visualizerState.sideBars.sensitivity = "medium";
+  }
+
+  if (!["low", "medium", "high"].includes(visualizerState.sideBars.barDensity)) {
+    visualizerState.sideBars.barDensity = "medium";
   }
 
   rebuildCachedPaint();
