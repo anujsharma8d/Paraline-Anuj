@@ -45,10 +45,17 @@ const DEFAULT_SETTINGS = Object.freeze({
     intensity: "medium",
     sensitivity: "medium",
     colorStyle: "blue"
+  }),
+  snowBubbleParticles: Object.freeze({
+    fallArea: "middle",
+    density: "medium",
+    motionStyle: "balanced",
+    glowStrength: "medium",
+    particleSize: "medium"
   })
 });
 
-const VALID_MAIN_THEMES = new Set(["ambientWave", "reactiveBorder", "flowBorder", "sideBars", "flatRipples", "dotParticles", "rippleFlow"]);
+const VALID_MAIN_THEMES = new Set(["ambientWave", "reactiveBorder", "flowBorder", "sideBars", "flatRipples", "dotParticles", "rippleFlow", "snowBubbleParticles"]);
 const VALID_AMBIENT_TONES = new Set(["blue", "purple", "warm"]);
 const VALID_LEVELS = new Set(["low", "medium", "high"]);
 const VALID_EDGE_MODES = new Set(["top", "bottom", "both"]);
@@ -69,6 +76,8 @@ const VALID_DOT_PARTICLES_MOTION_STYLES = new Set(["calm", "balanced", "energeti
 const VALID_DOT_PARTICLES_DIRECTIONS = new Set(["mostlyClockwise", "mostlyAnticlockwise", "beatReactive"]);
 const VALID_RIPPLE_FLOW_MODES = new Set(["sideRipples", "flatRipples"]);
 const VALID_RIPPLE_FLOW_COLORS = new Set(["red", "blue", "white"]);
+const VALID_SNOW_FALL_AREAS = new Set(["middle", "fullWidth"]);
+const VALID_PARTICLE_SIZES = new Set(["small", "medium", "large"]);
 
 function createDefaultSettings() {
   return {
@@ -79,7 +88,8 @@ function createDefaultSettings() {
     sideBars: { ...DEFAULT_SETTINGS.sideBars },
     flatRipples: { ...DEFAULT_SETTINGS.flatRipples },
     dotParticles: { ...DEFAULT_SETTINGS.dotParticles },
-    rippleFlow: { ...DEFAULT_SETTINGS.rippleFlow }
+    rippleFlow: { ...DEFAULT_SETTINGS.rippleFlow },
+    snowBubbleParticles: { ...DEFAULT_SETTINGS.snowBubbleParticles }
   };
 }
 
@@ -167,6 +177,16 @@ function sanitizeRippleFlow(input = {}) {
   };
 }
 
+function sanitizeSnowBubbleParticles(input = {}) {
+  return {
+    fallArea: pick(input.fallArea, VALID_SNOW_FALL_AREAS, DEFAULT_SETTINGS.snowBubbleParticles.fallArea),
+    density: pick(input.density, VALID_LEVELS, DEFAULT_SETTINGS.snowBubbleParticles.density),
+    motionStyle: pick(input.motionStyle, VALID_DOT_PARTICLES_MOTION_STYLES, DEFAULT_SETTINGS.snowBubbleParticles.motionStyle),
+    glowStrength: pick(input.glowStrength, VALID_GLOW_STRENGTHS, DEFAULT_SETTINGS.snowBubbleParticles.glowStrength),
+    particleSize: pick(input.particleSize, VALID_PARTICLE_SIZES, DEFAULT_SETTINGS.snowBubbleParticles.particleSize)
+  };
+}
+
 function migrateLegacySettings(input = {}) {
   if (VALID_MAIN_THEMES.has(input.selectedTheme)) {
     return input;
@@ -212,7 +232,8 @@ function sanitizeSettings(input = {}) {
     sideBars: sanitizeSideBars(source.sideBars),
     flatRipples: sanitizeFlatRipples(source.flatRipples),
     dotParticles: sanitizeDotParticles(source.dotParticles),
-    rippleFlow: sanitizeRippleFlow(source.rippleFlow)
+    rippleFlow: sanitizeRippleFlow(source.rippleFlow),
+    snowBubbleParticles: sanitizeSnowBubbleParticles(source.snowBubbleParticles)
   };
 }
 
