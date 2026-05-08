@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useEffect } from "react";
 import HeroSection from "./components/sections/HeroSection";
 import ExperienceSection from "./components/sections/ExperienceSection";
 import ThemeShowcaseSection from "./components/sections/ThemeShowcaseSection";
@@ -6,8 +7,50 @@ import CTASection from "./components/sections/CTASection";
 
 const downloadUrl = import.meta.env.VITE_DOWNLOAD_URL || "/downloads/Paraline-Setup.exe";
 const isHostedInstaller = /^https?:\/\//.test(downloadUrl);
+const gaMeasurementId = import.meta.env.VITE_GA_MEASUREMENT_ID || "";
 
 export default function App() {
+  useEffect(() => {
+    if (!gaMeasurementId) {
+      return undefined;
+    }
+
+    if (document.querySelector('script[data-paraline-ga="true"]')) {
+      return undefined;
+    }
+
+    window.dataLayer = window.dataLayer || [];
+    window.gtag =
+      window.gtag ||
+      function gtagProxy() {
+        window.dataLayer.push(arguments);
+      };
+
+    window.gtag("js", new Date());
+    window.gtag("config", gaMeasurementId);
+
+    const script = document.createElement("script");
+    script.defer = true;
+    script.async = true;
+    script.dataset.paralineGa = "true";
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`;
+    document.head.appendChild(script);
+
+    return () => {
+      script.remove();
+    };
+  }, []);
+
+  const trackDownloadClick = (location) => {
+    if (typeof window.gtag !== "function" || !gaMeasurementId) {
+      return;
+    }
+
+    window.gtag("event", "download_click", {
+      location,
+    });
+  };
+
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-midnight text-white">
       <div className="pointer-events-none absolute inset-0 bg-noise opacity-80" />
@@ -29,6 +72,7 @@ export default function App() {
             <a
               href={downloadUrl}
               download={isHostedInstaller ? undefined : "Paraline-Setup.exe"}
+              onClick={() => trackDownloadClick("navbar")}
               className="rounded-full border border-white/12 bg-white/6 px-4 py-2 text-[11px] uppercase tracking-[0.28em] text-white/82 backdrop-blur transition hover:border-cyan-300/35 hover:bg-white/10 hover:text-white"
             >
               Windows Installer
@@ -37,10 +81,18 @@ export default function App() {
         </header>
 
         <main>
-          <HeroSection downloadUrl={downloadUrl} isHostedInstaller={isHostedInstaller} />
+          <HeroSection
+            downloadUrl={downloadUrl}
+            isHostedInstaller={isHostedInstaller}
+            onDownloadClick={() => trackDownloadClick("hero")}
+          />
           <ExperienceSection />
           <ThemeShowcaseSection />
-          <CTASection downloadUrl={downloadUrl} isHostedInstaller={isHostedInstaller} />
+          <CTASection
+            downloadUrl={downloadUrl}
+            isHostedInstaller={isHostedInstaller}
+            onDownloadClick={() => trackDownloadClick("cta")}
+          />
         </main>
       </div>
     </div>
