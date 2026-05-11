@@ -174,10 +174,20 @@ function resizeOverlayToPrimaryDisplay() {
 }
 
 function handleAudioBridgeStatusChange(status) {
-  if (!status || status.mode === "helper") {
+  if (!status) {
     return;
   }
-
+  if (status.mode === "helper") {
+    return;
+  }
+  // Show a user notification for fallback if not already in simulated mode
+  if (status.reason && status.mode === "simulated") {
+    const { Notification } = require("electron");
+    new Notification({
+      title: "Paraline: Audio Fallback Active",
+      body: status.reason.substring(0, 200) + (status.reason.length > 200 ? "..." : "")
+    }).show();
+  }
   startSimulatedAudioFallback();
   refreshTrayMenu();
 }
