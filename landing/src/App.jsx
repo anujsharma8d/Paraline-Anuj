@@ -122,23 +122,34 @@ export default function App() {
 
         <main>
           {currentPage === "home" ? (
-            <>
-              <HeroSection
-                downloadUrl={downloadUrl}
-                isHostedInstaller={isHostedInstaller}
-                onDownloadClick={() => trackDownloadClick("hero")}
-              />
-              <ExperienceSection />
-              <ThemeShowcaseSection />
-              <CTASection
-                downloadUrl={downloadUrl}
-                isHostedInstaller={isHostedInstaller}
-                onDownloadClick={() => trackDownloadClick("cta")}
-              />
-            </>
-          ) : (
-            <InstallationGuide setCurrentPage={setCurrentPage} />
-          )}
+           <>
+          <section id="hero" className="scroll-mt-28">
+          <HeroSection
+            downloadUrl={downloadUrl}
+            isHostedInstaller={isHostedInstaller}
+            onDownloadClick={() => trackDownloadClick("hero")}
+            />
+            </section>
+            <section id="experience" className="scroll-mt-28">
+          <ExperienceSection />
+
+            </section>
+            <section id="themes" className="scroll-mt-28">
+          <ThemeShowcaseSection />
+
+            </section>
+            <section id="settings" className="scroll-mt-28">
+
+          <CTASection
+            downloadUrl={downloadUrl}
+            isHostedInstaller={isHostedInstaller}
+            onDownloadClick={() => trackDownloadClick("cta")}
+            />
+            </section>
+        </>
+        ) : (
+    <InstallationGuide setCurrentPage={setCurrentPage} />
+  )}
         </main>
         <Footer />
       </div>
