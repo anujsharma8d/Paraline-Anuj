@@ -975,6 +975,66 @@ const THEME_INFOS = {
         ]
       }
     ]
+  },
+  sideBraids: {
+    label: "Side Braids",
+    settingsHeader: "Side Braids Settings",
+    options: [
+      {
+        key: "colorStyle",
+        label: "Color Style",
+        choices: [
+          { value: "cyanPink", label: "Cyan & Pink" },
+          { value: "bluePurple", label: "Blue & Purple" },
+          { value: "redBlue", label: "Red & Blue" },
+          { value: "white", label: "White" }
+        ]
+      },
+      {
+        key: "braidWidth",
+        label: "Braid Width",
+        choices: [
+          { value: "thin", label: "Thin" },
+          { value: "medium", label: "Medium" },
+          { value: "thick", label: "Thick" }
+        ]
+      },
+      {
+        key: "motionStyle",
+        label: "Motion Style",
+        choices: [
+          { value: "calm", label: "Calm" },
+          { value: "balanced", label: "Balanced" },
+          { value: "energetic", label: "Energetic" }
+        ]
+      },
+      {
+        key: "braidDensity",
+        label: "Braid Density",
+        choices: [
+          { value: "sparse", label: "Sparse" },
+          { value: "medium", label: "Medium" },
+          { value: "dense", label: "Dense" }
+        ]
+      },
+      {
+        key: "flowDirection",
+        label: "Flow Direction",
+        choices: [
+          { value: "topDown", label: "Top Down" },
+          { value: "bottomUp", label: "Bottom Up" }
+        ]
+      },
+      {
+        key: "glowStrength",
+        label: "Glow Strength",
+        choices: [
+          { value: "soft", label: "Soft" },
+          { value: "medium", label: "Medium" },
+          { value: "strong", label: "Strong" }
+        ]
+      }
+    ]
   }
 };
 
@@ -1183,7 +1243,7 @@ function buildMenuDOM(items, container, subDirectionLeft) {
         el.classList.add("submenu-left");
       }
 
-      // Checkmark column (only for checkable items)
+      // Checkmark or Icon column
       if (item.checked !== undefined) {
         const iconEl = document.createElement("div");
         iconEl.className = "item-icon";
@@ -1191,6 +1251,15 @@ function buildMenuDOM(items, container, subDirectionLeft) {
           iconEl.innerHTML = `<svg class="checkmark" xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
         }
         el.appendChild(iconEl);
+      } else if (item.icon) {
+        const iconEl = document.createElement("div");
+        iconEl.className = "item-icon";
+        iconEl.innerHTML = item.icon;
+        el.appendChild(iconEl);
+      } else {
+        const spacerEl = document.createElement("div");
+        spacerEl.className = "item-icon-spacer";
+        el.appendChild(spacerEl);
       }
 
       // Label
