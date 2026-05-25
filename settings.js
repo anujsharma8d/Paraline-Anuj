@@ -209,6 +209,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const presetSelector = document.getElementById('preset-selector');
     const savePresetBtn = document.getElementById('btn-save-preset');
     const presetNameInput = document.getElementById('preset-name-input');
+    const themeProfileSelector = document.getElementById('theme-profile-selector');
+    const themeProfileNameInput = document.getElementById('theme-profile-name');
+
+    const btnSaveThemeProfile = document.getElementById('btn-save-theme-profile');
+    const btnLoadThemeProfile = document.getElementById('btn-load-theme-profile');
+    const btnDeleteThemeProfile = document.getElementById('btn-delete-theme-profile');
+    const btnExportThemeProfile = document.getElementById('btn-export-theme-profile');
+    const btnImportThemeProfile = document.getElementById('btn-import-theme-profile');
+    const btnResetThemeProfile = document.getElementById('btn-reset-theme-profile');
 
     let presets = {
         "Ocean Blue": ["#00f2fe", "#4facfe", "#8ee2ff"],
@@ -260,6 +269,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     updatePresetDropdown();
+    async function refreshThemeProfiles() {
+    if (!window.paralineApp) return;
+
+    const profiles = await window.paralineApp.getThemeProfiles();
+
+    themeProfileSelector.innerHTML =
+        '<option value="">Select Theme Profile</option>';
+
+    Object.keys(profiles).forEach(profileName => {
+        const option = document.createElement('option');
+
+        option.value = profileName;
+        option.textContent = profileName;
+
+        themeProfileSelector.appendChild(option);
+    });
+}
+
+refreshThemeProfiles();
 
     // ----------------------------------------
     // SLIDER UPDATES
@@ -360,6 +388,72 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnReload = document.getElementById('btn-reload');
         const btnGithub = document.getElementById('btn-github');
         const btnLanding = document.getElementById('btn-landing');
+        btnSaveThemeProfile.addEventListener('click', async () => {
+            const profileName = themeProfileNameInput.value.trim();
+
+            if (!profileName) return;
+
+            await window.paralineApp.saveThemeProfile(profileName);
+
+            themeProfileNameInput.value = '';
+            alert(`Theme profile "${profileName}" saved!`);
+
+            refreshThemeProfiles();
+        });
+
+        btnLoadThemeProfile.addEventListener('click', async () => {
+            const selectedProfile = themeProfileSelector.value;
+
+            if (!selectedProfile) return;
+
+            const settings =
+                await window.paralineApp.loadThemeProfile(selectedProfile);
+
+            if (!settings) return;
+
+            // Instantly reloads the page to perfectly synchronize all sliders, colors, and controls in the UI
+            location.reload();
+        });
+
+        btnDeleteThemeProfile.addEventListener('click', async () => {
+            const selectedProfile = themeProfileSelector.value;
+
+            if (!selectedProfile) return;
+
+            await window.paralineApp.deleteThemeProfile(selectedProfile);
+            alert("Theme profile deleted successfully.");
+
+            refreshThemeProfiles();
+        });
+
+        btnExportThemeProfile.addEventListener('click', async () => {
+            const selectedProfile = themeProfileSelector.value;
+
+            if (!selectedProfile) return;
+
+            const res = await window.paralineApp.exportThemeProfile(selectedProfile);
+            if (res && res.success) {
+                alert("Theme profile exported successfully!");
+            }
+        });
+
+        btnImportThemeProfile.addEventListener('click', async () => {
+            const res = await window.paralineApp.importThemeProfile();
+
+            if (res && res.success) {
+                alert(`Theme profile "${res.profileName}" imported successfully!`);
+                refreshThemeProfiles();
+            } else if (res && res.error) {
+                alert(`Failed to import theme: ${res.error}`);
+            }
+        });
+
+        btnResetThemeProfile.addEventListener('click', async () => {
+            if (confirm("Are you sure you want to restore default settings? This will reset all your theme customizations.")) {
+                await window.paralineApp.resetThemeSettings();
+                location.reload();
+            }
+        });
 
         btnHide.addEventListener('click', async () => {
             const isHidden = await window.paralineApp.toggleHide();
