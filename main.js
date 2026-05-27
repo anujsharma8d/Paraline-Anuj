@@ -1130,11 +1130,11 @@ app.whenReady().then(() => {
 
 // --- NEW: Start Theme Automation Agent ---
   const themeAgent = new ThemeAgent(settingsStore, (themeName) => {
-    settingsStore.set('selectedTheme', themeName); 
+    updateSettings({ selectedTheme: themeName });
   });
   
   themeAgent.start();
-  // -----------------------------------------
+// -----------------------------------------
   
   ipcMain.handle("audio-bridge-status", () => {
     if (!audioBridge) {
