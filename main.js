@@ -1,8 +1,10 @@
 const { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage, screen, shell, dialog, powerMonitor } = require("electron");
+const { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage, screen, shell, dialog, nativeTheme, systemPreferences } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const { createAudioBridge } = require("./audioBridge");
 const { createDefaultSettings, createSettingsStore, createThemeDefaults, sanitizeSettings } = require("./settingsStore");
+const ThemeAgent = require('./themeAgent');
 
 let overlayWindow;
 let lastBridgeMode = null;
@@ -15,6 +17,7 @@ let isHidden = false;
 let settingsStore;
 let visualizerSettings;
 let settingsWindow;
+let themeAgent;
 
 // --- Focus Mode state ---
 let focusModeTimer = null;
@@ -46,6 +49,63 @@ function createSettingsWindow() {
 }
 
 const APP_VERSION = app.getVersion();
+
+function normalizeSystemColor(rawColor, fallback = "#4facfe") {
+  if (typeof rawColor !== "string") {
+    return fallback;
+  }
+
+  const normalized = rawColor.trim().replace(/^#/, "");
+
+  if (normalized.length === 8) {
+    return `#${normalized.slice(0, 6)}`;
+  }
+
+  if (normalized.length === 6) {
+    return `#${normalized}`;
+  }
+
+  return fallback;
+}
+
+function getSystemAppearance() {
+  if (typeof nativeTheme.shouldUseDarkColorsForSystemIntegratedUI === "boolean") {
+    return nativeTheme.shouldUseDarkColorsForSystemIntegratedUI ? "dark" : "light";
+  }
+
+  return nativeTheme.shouldUseDarkColors ? "dark" : "light";
+}
+
+function getSystemAccentColor() {
+  if (typeof systemPreferences.getAccentColor === "function") {
+    try {
+      const accentColor = normalizeSystemColor(systemPreferences.getAccentColor(), "");
+
+      if (accentColor) {
+        return accentColor;
+      }
+    } catch (_error) {
+      // Fall through to the highlight color fallback.
+    }
+  }
+
+  if (typeof systemPreferences.getColor === "function") {
+    try {
+      return normalizeSystemColor(systemPreferences.getColor("highlight"));
+    } catch (_error) {
+      // Use the in-app fallback below.
+    }
+  }
+
+  return "#4facfe";
+}
+
+function getSystemColorState() {
+  return {
+    systemAppearance: getSystemAppearance(),
+    systemAccentColor: getSystemAccentColor()
+  };
+}
 
 function applyStartupSettings(launchOnStartup) {
   app.setLoginItemSettings({
@@ -138,6 +198,7 @@ function getRendererSettings() {
   const helperConnected = audioBridge ? (audioBridge.getStatus().mode === "helper") : false;
   return {
     ...visualizerSettings,
+    ...getSystemColorState(),
     paused: isPaused,
     hidden: isHidden,
     version: APP_VERSION,
@@ -145,12 +206,17 @@ function getRendererSettings() {
   };
 }
 
-function sendVisualizerSettings() {
-  if (!overlayWindow || overlayWindow.isDestroyed()) {
+function sendVisualizerSettingsToWindow(targetWindow) {
+  if (!targetWindow || targetWindow.isDestroyed()) {
     return;
   }
 
-  overlayWindow.webContents.send("visualizer-settings", getRendererSettings());
+  targetWindow.webContents.send("visualizer-settings", getRendererSettings());
+}
+
+function sendVisualizerSettings() {
+  sendVisualizerSettingsToWindow(overlayWindow);
+  sendVisualizerSettingsToWindow(settingsWindow);
 }
 
 function mergeSettingsPatch(currentSettings, patch) {
@@ -181,6 +247,8 @@ function updateSettings(nextSettings) {
   // Re-apply focus mode whenever settings change
   if (nextSettings.focusMode !== undefined) {
     applyFocusModeState();
+  if (nextSettings.themeAutomation !== undefined && themeAgent) {
+    themeAgent.start();
   }
 
   sendVisualizerSettings();
@@ -1248,6 +1316,24 @@ app.whenReady().then(() => {
   settingsStore = createSettingsStore(app.getPath("userData"));
   visualizerSettings = settingsStore.save(settingsStore.load());
   applyStartupSettings(visualizerSettings.launchOnStartup);
+
+  nativeTheme.on("updated", () => {
+    sendVisualizerSettings();
+  });
+  systemPreferences.on("accent-color-changed", () => {
+    sendVisualizerSettings();
+  });
+  systemPreferences.on("color-changed", () => {
+    sendVisualizerSettings();
+  });
+
+  // --- NEW: Start Theme Automation Agent ---
+  themeAgent = new ThemeAgent(settingsStore, (themeName) => {
+    updateSettings({ selectedTheme: themeName });
+  });
+  
+  themeAgent.start();
+  // -----------------------------------------
 
   ipcMain.handle("audio-bridge-status", () => {
     if (!audioBridge) {
