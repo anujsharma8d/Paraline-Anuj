@@ -1455,7 +1455,7 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle("theme-profiles:reset", () => {
-    resetAllSettings();
+    resetCurrentThemeSettings();
     return getRendererSettings();
   });
 
