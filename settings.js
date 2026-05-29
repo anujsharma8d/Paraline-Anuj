@@ -248,12 +248,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const themeSelector = document.getElementById('theme-selector');
     themeSelector.addEventListener('change', (e) => {
-        renderThemeSettings(e.target.value);
+        const themeId = e.target.value;
+        renderThemeSettings(themeId);
         
+        // Load custom colors of the newly selected theme if they exist, or fall back to global custom colors
+        const themeData = cachedSettings[themeId] || {};
+        if (themeData.customColors && themeData.customColors.length === 3) {
+            color1.value = themeData.customColors[0];
+            color2.value = themeData.customColors[1];
+            color3.value = themeData.customColors[2];
+        } else if (cachedSettings.customColors && cachedSettings.customColors.length === 3) {
+            color1.value = cachedSettings.customColors[0];
+            color2.value = cachedSettings.customColors[1];
+            color3.value = cachedSettings.customColors[2];
+        }
+
         // Also trigger an update to actually switch the active visualizer theme
         if (window.visualizerSettings) {
             window.visualizerSettings.update({
-                selectedTheme: e.target.value
+                selectedTheme: themeId
             });
         }
     });
@@ -471,8 +484,11 @@ refreshThemeProfiles();
         themePatch.customSpeed = parseInt(speedSlider.value, 10);
 
         // Update the cached settings so the UI dropdowns immediately reflect "Custom"
+        if (!cachedSettings[activeTheme]) cachedSettings[activeTheme] = {};
+        Object.assign(cachedSettings[activeTheme], themePatch);
         if (schema.colorStyle) cachedSettings[activeTheme].colorStyle = "custom";
         if (schema.tone) cachedSettings[activeTheme].tone = "custom";
+        cachedSettings.customColors = themePatch.customColors;
         renderThemeSettings(activeTheme); // Refresh UI dropdowns to show 'Custom' selected
 
         window.visualizerSettings.update({
@@ -679,7 +695,12 @@ refreshThemeProfiles();
             }
             
             // set custom variables into UI if they exist globally or on the active theme
-            if (settings.customColors && settings.customColors.length === 3) {
+            const activeThemeData = settings[settings.selectedTheme] || {};
+            if (activeThemeData.customColors && activeThemeData.customColors.length === 3) {
+                color1.value = activeThemeData.customColors[0];
+                color2.value = activeThemeData.customColors[1];
+                color3.value = activeThemeData.customColors[2];
+            } else if (settings.customColors && settings.customColors.length === 3) {
                 color1.value = settings.customColors[0];
                 color2.value = settings.customColors[1];
                 color3.value = settings.customColors[2];
