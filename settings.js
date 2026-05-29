@@ -483,7 +483,6 @@ refreshThemeProfiles();
         themePatch.customSensitivity = parseInt(sensitivitySlider.value, 10);
         themePatch.customSpeed = parseInt(speedSlider.value, 10);
 
-        // Update the cached settings so the UI dropdowns immediately reflect "Custom"
         if (!cachedSettings[activeTheme]) cachedSettings[activeTheme] = {};
         Object.assign(cachedSettings[activeTheme], themePatch);
         if (schema.colorStyle) cachedSettings[activeTheme].colorStyle = "custom";

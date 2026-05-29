@@ -365,7 +365,7 @@ function stopSimulatedAudioFallback() {
 }
 
 function resizeOverlayToPrimaryDisplay() {
-  if (!overlayWindow) {
+  if (!overlayWindow || overlayWindow.isDestroyed()) {
     return;
   }
 
