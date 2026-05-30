@@ -3,7 +3,7 @@ import EdgePulseFrame from "../EdgePulseFrame";
 
 const heroLines = ["Audio reactive", "Edge-native", "Built for Windows"];
 
-export default function HeroSection({ downloadUrl, isHostedInstaller, onDownloadClick }) {
+export default function HeroSection({ downloadUrl, isHostedInstaller, onDownloadClick, setCurrentPage }) {
   return (
     <section
       id="hero"
@@ -62,22 +62,36 @@ export default function HeroSection({ downloadUrl, isHostedInstaller, onDownload
               visible: { opacity: 1, y: 0 },
             }}
             transition={{ duration: 0.72, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
+            className="mt-10 flex flex-col items-center justify-center gap-3"
           >
-            <a
-              href={downloadUrl}
-              download={isHostedInstaller ? undefined : "Paraline-Setup.exe"}
-              onClick={onDownloadClick}
-              className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-950 transition hover:scale-[1.02] hover:bg-cyan-100"
-            >
-              Download for Windows
-            </a>
-            <a
-              href="#themes"
-              className="rounded-full border border-white/12 bg-white/5 px-6 py-3 text-sm text-white/78 backdrop-blur transition hover:border-cyan-300/30 hover:bg-white/10 hover:text-white"
-            >
-              Explore Themes
-            </a>
+            {/* ── buttons row — identical to original ── */}
+            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <a
+                href={downloadUrl}
+                download={isHostedInstaller ? undefined : "Paraline-Setup.exe"}
+                onClick={onDownloadClick}
+                className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-950 transition hover:scale-[1.02] hover:bg-cyan-100"
+              >
+                Download for Windows
+              </a>
+              <a
+                href="#themes"
+                className="rounded-full border border-white/12 bg-white/5 px-6 py-3 text-sm text-white/78 backdrop-blur transition hover:border-cyan-300/30 hover:bg-white/10 hover:text-white"
+              >
+                Explore Themes
+              </a>
+            </div>
+
+            {/* ── subtle system requirements hint — sits centered below both buttons ── */}
+            <p className="text-[11px] text-white/35">
+              Requires Windows 10/11 (64-bit) · ~500 MB space.{" "}
+              <button
+                onClick={() => setCurrentPage("system-requirements")}
+                className="text-cyan-300/60 underline underline-offset-2 transition hover:text-cyan-300/90 bg-transparent border-none cursor-pointer p-0 text-[11px]"
+              >
+                View Detailed Specs
+              </button>
+            </p>
           </motion.div>
         </motion.div>
 
