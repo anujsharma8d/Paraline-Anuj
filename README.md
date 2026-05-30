@@ -346,6 +346,14 @@ If you want to explore the implementation details, local setup, or development w
 
 ---
 
+## ✦ Troubleshooting & Support
+
+If you encounter any setup or runtime issues with audio capture, visualizer reaction, C# compilation, or background behavior:
+
+**[Open Troubleshooting Guide](./docs/TROUBLESHOOTING.md)**
+
+---
+
 <div align="center">
 
 ### Paraline is not a media player visualizer.
