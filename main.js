@@ -527,6 +527,7 @@ function createTrayIcon() {
 function buildMainThemeMenuItems() {
   const themeOptions = [
     { value: "ambientWave", label: "Ambient Wave" },
+    { value: "auroraDrift", label: "Aurora Drift" },
     { value: "reactiveBorder", label: "Reactive Border" },
     { value: "flowBorder", label: "Flow Border" },
     { value: "sideBars", label: "Side Bars" },
@@ -535,8 +536,7 @@ function buildMainThemeMenuItems() {
     { value: "rippleFlow", label: "Ripple Flow" },
     { value: "snowBubbleParticles", label: "Snow Particles" },
     { value: "edgeCrystals", label: "Edge Crystals" },
-    { value: "sideBraids", label: "Side Braids" },
-    { value: "auroraDrift", label: "Aurora Drift" }
+    { value: "sideBraids", label: "Side Braids" }
   ];
 
   return themeOptions.map((themeOption) => ({
