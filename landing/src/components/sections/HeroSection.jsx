@@ -81,17 +81,6 @@ export default function HeroSection({ downloadUrl, isHostedInstaller, onDownload
                 Explore Themes
               </a>
             </div>
-
-            {/* ── subtle system requirements hint — sits centered below both buttons ── */}
-            <p className="text-[11px] text-white/35">
-              Requires Windows 10/11 (64-bit) · ~500 MB space.{" "}
-              <button
-                onClick={() => setCurrentPage("system-requirements")}
-                className="text-cyan-300/60 underline underline-offset-2 transition hover:text-cyan-300/90 bg-transparent border-none cursor-pointer p-0 text-[11px]"
-              >
-                View Detailed Specs
-              </button>
-            </p>
           </motion.div>
         </motion.div>
 
