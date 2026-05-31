@@ -11,6 +11,7 @@ import InstallationGuide from "./components/pages/InstallationGuide";
 import TermsPage from "./components/pages/TermsPage";
 import PrivacyPolicy from "./components/pages/PrivacyPolicy";
 import FAQPage from "./components/pages/FAQPage";
+import SystemRequirements from "./components/pages/SystemRequirements"; // ← NEW
 
 const downloadUrl = import.meta.env.VITE_DOWNLOAD_URL || "https://github.com/SamXop123/Paraline/releases/download/v1.2.0/Paraline-Setup-1.2.0.exe";
 const isHostedInstaller = /^https?:\/\//.test(downloadUrl);
@@ -106,7 +107,20 @@ export default function App() {
             >
               Paraline
             </a>
+
             <div className="flex items-center gap-3">
+              {/* ── NEW: System Requirements nav link ── */}
+              <button
+                onClick={() => setCurrentPage("system-requirements")}
+                className={`text-[11px] uppercase tracking-[0.28em] transition hover:text-white ${
+                  currentPage === "system-requirements"
+                    ? "text-cyan-300/90"
+                    : "text-white/52"
+                }`}
+              >
+                Sys. Requirements
+              </button>
+
               <a
                 href={githubUrl}
                 target="_blank"
@@ -135,7 +149,8 @@ export default function App() {
                   downloadUrl={downloadUrl}
                   isHostedInstaller={isHostedInstaller}
                   onDownloadClick={() => trackDownloadClick("hero")}
-                />
+                  setCurrentPage={setCurrentPage}
+              />
               </section>
               <section id="experience" className="scroll-mt-28">
                 <ExperienceSection />
@@ -159,6 +174,8 @@ export default function App() {
             <PrivacyPolicy setCurrentPage={setCurrentPage} />
           ) : currentPage === "faq" ? (
             <FAQPage setCurrentPage={setCurrentPage} />
+          ) : currentPage === "system-requirements" ? ( // ← NEW
+            <SystemRequirements setCurrentPage={setCurrentPage} />
           ) : null}
         </main>
         <Footer setCurrentPage={setCurrentPage} />

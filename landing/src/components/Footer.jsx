@@ -3,6 +3,7 @@ const footerLinks = [
   { label: "Terms & Conditions", id: "terms" },
   { label: "Privacy Policy", id: "privacy" },
   { label: "FAQ", id: "faq" },
+  { label: "System Requirements", id: "system-requirements" }, // ← NEW
 ];
 
 export default function Footer({ setCurrentPage }) {
