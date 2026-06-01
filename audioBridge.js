@@ -82,20 +82,12 @@ function createAudioBridge(sendLevel, onStatusChange = () => {}) {
             sendLevel(message.value);
           }
         } catch (_error) {
-          updateStatus({
-            mode: "simulated",
-            reason: [
-              "Audio helper sent invalid data.",
-              "\n",
-              "Troubleshooting:",
-              "\n- The audio capture process returned unexpected output.",
-              "\n- Try restarting Paraline.",
-              "\n- If the problem persists, rebuild the helper binary."
-            ].join("")
-          });
+  console.warn("Invalid helper message received.");
+  continue;
+}
         }
       }
-    });
+    };
 
     helperProcess.stderr.on("data", (chunk) => {
       updateStatus({
