@@ -98,7 +98,8 @@ export default function App() {
               <button
                 onClick={toggleSidebar}
                 className="shrink-0"
-                aria-label="Open navigation menu"
+                aria-label={isSidebarOpen ? "Close navigation menu" : "Open navigation menu"}
+                aria-expanded={isSidebarOpen}
               >
                 <img src="./sidebar-icons/menu.svg" className="h-8 w-10 object-contain" />
               </button>
