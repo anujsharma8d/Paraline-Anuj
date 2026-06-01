@@ -55,7 +55,7 @@ contextBridge.exposeInMainWorld("visualizerSettings", {
     return ipcRenderer.invoke("visualizer-settings:get");
   },
   update(patch) {
-    ipcRenderer.send("visualizer-settings:update", patch);
+    return ipcRenderer.invoke("visualizer-settings:update", patch);
   },
   action(action, data) {
     ipcRenderer.send("visualizer-action", { action, data });
@@ -105,5 +105,8 @@ contextBridge.exposeInMainWorld("paralineApp", {
     ipcRenderer.invoke("theme-profiles:import"),
 
   resetThemeSettings: () =>
-    ipcRenderer.invoke("theme-profiles:reset")
+    ipcRenderer.invoke("theme-profiles:reset"),
+
+  resetActiveThemeSettings: () =>
+    ipcRenderer.invoke("theme-profiles:reset-current")
 });

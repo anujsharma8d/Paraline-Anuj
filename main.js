@@ -10,6 +10,7 @@ let lastBridgeMode = null;
 let lastBridgeReason = null;
 let audioBridge;
 let fakeTimer;
+let isQuitting = false;
 let tray;
 let isPaused = false;
 let isHidden = false;
@@ -33,6 +34,7 @@ function createSettingsWindow() {
     minWidth: 800,
     minHeight: 600,
     title: "Paraline Settings",
+    icon: getWindowIconPath(),
     backgroundColor: "#08090d",
     webPreferences: {
       contextIsolation: true,
@@ -154,6 +156,7 @@ function createOverlayWindow() {
     hasShadow: false,
     focusable: true,
     backgroundColor: "#00000000",
+    icon: getWindowIconPath(),
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
@@ -173,7 +176,12 @@ function createOverlayWindow() {
     }, 100);
   });
 
+  overlayWindow.on("close", () => {
+    stopSimulatedAudioFallback();
+  });
+
   overlayWindow.on("closed", () => {
+    stopSimulatedAudioFallback();
     overlayWindow = null;
   });
 }
@@ -272,6 +280,7 @@ function reloadVisualizer() {
     return;
   }
 
+  stopSimulatedAudioFallback();
   overlayWindow.webContents.reloadIgnoringCache();
 }
 
@@ -337,7 +346,9 @@ function applyFocusModeState() {
 }
 
 function startSimulatedAudioFallback() {
-  stopSimulatedAudioFallback();
+  if (fakeTimer) {
+    return;
+  }
 
   fakeTimer = setInterval(() => {
     const now = Date.now();
@@ -354,7 +365,7 @@ function stopSimulatedAudioFallback() {
 }
 
 function resizeOverlayToPrimaryDisplay() {
-  if (!overlayWindow) {
+  if (!overlayWindow || overlayWindow.isDestroyed()) {
     return;
   }
 
@@ -382,8 +393,10 @@ function handleAudioBridgeStatusChange(status) {
   }
   lastBridgeMode = status.mode;
   lastBridgeReason = status.reason;
-  if (status.mode !== "helper") {
+  if (status.mode !== "helper" && !isQuitting) {
     startSimulatedAudioFallback();
+  } else {
+    stopSimulatedAudioFallback();
   }
   refreshTrayMenu();
 }
@@ -408,7 +421,25 @@ function resetAllSettings() {
   sendVisualizerSettings();
   refreshTrayMenu();
 }
+// Reserved JavaScript property names that must not be used as object keys.
+// Using these as keys on a plain object pollutes Object.prototype and affects
+// every plain object created in the same process for the rest of its lifetime.
+const RESERVED_PROFILE_NAMES = new Set(["__proto__", "constructor", "prototype"]);
+
+// Allowlist pattern: profile names may only contain letters, digits,
+// spaces, hyphens, underscores, and parentheses (max 64 chars).
+const SAFE_PROFILE_NAME_RE = /^[A-Za-z0-9 _\-()À-ɏ]{1,64}$/;
+
+function isValidProfileName(name) {
+  if (typeof name !== "string" || name.trim() === "") return false;
+  if (RESERVED_PROFILE_NAMES.has(name)) return false;
+  return SAFE_PROFILE_NAME_RE.test(name);
+}
+
 function saveThemeProfile(profileName) {
+  if (!isValidProfileName(profileName)) {
+    return null;
+  }
   const profiles = settingsStore.loadProfiles();
 
   profiles[profileName] = visualizerSettings;
@@ -419,6 +450,9 @@ function saveThemeProfile(profileName) {
 }
 
 function loadThemeProfile(profileName) {
+  if (!isValidProfileName(profileName)) {
+    return null;
+  }
   const profiles = settingsStore.loadProfiles();
 
   if (!profiles[profileName]) {
@@ -434,6 +468,9 @@ function loadThemeProfile(profileName) {
 }
 
 function deleteThemeProfile(profileName) {
+  if (!isValidProfileName(profileName)) {
+    return settingsStore.loadProfiles();
+  }
   const profiles = settingsStore.loadProfiles();
 
   delete profiles[profileName];
@@ -447,10 +484,45 @@ function getThemeProfiles() {
   return settingsStore.loadProfiles();
 }
 
+// Allowlist of URL schemes that may be passed to shell.openExternal.
+// Any other scheme (e.g. ms-settings:, file:, javascript:) is silently
+// rejected to prevent OS-level command execution via registered protocols.
+const ALLOWED_EXTERNAL_SCHEMES = new Set(["https:", "http:"]);
+
 function openExternalUrl(url) {
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return;
+  }
+  if (!ALLOWED_EXTERNAL_SCHEMES.has(parsed.protocol)) {
+    return;
+  }
   shell.openExternal(url).catch(() => {
     // Ignore shell open failures from tray actions.
   });
+}
+
+function getWindowIconPath() {
+  const iconCandidates = [
+    path.join(process.resourcesPath, "assets", "appicon.ico"),
+    path.join(process.resourcesPath, "assets", "appicon.png"),
+    path.join(process.resourcesPath, "assets", "paraline.png"),
+    path.join(__dirname, "assets", "appicon.ico"),
+    path.join(__dirname, "assets", "appicon.png"),
+    path.join(__dirname, "assets", "paraline.png")
+  ];
+
+  const iconPath = iconCandidates.find((candidatePath) => {
+    try {
+      return require("fs").existsSync(candidatePath);
+    } catch {
+      return false;
+    }
+  });
+
+  return iconPath || path.join(__dirname, "assets", "appicon.png");
 }
 
 function createTrayIcon() {
@@ -493,6 +565,7 @@ function createTrayIcon() {
 function buildMainThemeMenuItems() {
   const themeOptions = [
     { value: "ambientWave", label: "Ambient Wave" },
+    { value: "auroraDrift", label: "Aurora Drift" },
     { value: "reactiveBorder", label: "Reactive Border" },
     { value: "flowBorder", label: "Flow Border" },
     { value: "sideBars", label: "Side Bars" },
@@ -501,8 +574,7 @@ function buildMainThemeMenuItems() {
     { value: "rippleFlow", label: "Ripple Flow" },
     { value: "snowBubbleParticles", label: "Snow Particles" },
     { value: "edgeCrystals", label: "Edge Crystals" },
-    { value: "sideBraids", label: "Side Braids" },
-    { value: "auroraDrift", label: "Aurora Drift" }
+    { value: "sideBraids", label: "Side Braids" }
   ];
 
   return themeOptions.map((themeOption) => ({
@@ -1350,10 +1422,6 @@ app.whenReady().then(() => {
     return getRendererSettings();
   });
 
-  ipcMain.on("visualizer-settings:update", (event, patch) => {
-    updateSettings(patch);
-  });
-
   ipcMain.on("visualizer-action", (event, { action, data }) => {
     if (action === "toggle-paused") {
       togglePaused();
@@ -1422,6 +1490,11 @@ app.whenReady().then(() => {
 
   ipcMain.handle("theme-profiles:reset", () => {
     resetAllSettings();
+    return getRendererSettings();
+  });
+
+  ipcMain.handle("theme-profiles:reset-current", () => {
+    resetCurrentThemeSettings();
     return getRendererSettings();
   });
 
@@ -1499,7 +1572,11 @@ app.whenReady().then(() => {
       // Sanitize the imported profile to prevent prototype pollution and arbitrary property injection
       const sanitizedProfile = sanitizeSettings(importedProfile);
 
-      const profileName = path.basename(filePath, ".json");
+      const rawProfileName = path.basename(filePath, ".json");
+      if (!isValidProfileName(rawProfileName)) {
+        return { success: false, error: "Invalid profile name: the filename contains reserved or disallowed characters." };
+      }
+      const profileName = rawProfileName;
       const profiles = settingsStore.loadProfiles();
 
       profiles[profileName] = sanitizedProfile;
@@ -1554,7 +1631,23 @@ app.on("second-instance", () => {
   }
 });
 
+app.on("before-quit", () => {
+  isQuitting = true;
+  stopSimulatedAudioFallback();
+
+  if (audioBridge) {
+    audioBridge.stop();
+  }
+});
+
+app.on("will-quit", () => {
+  stopSimulatedAudioFallback();
+});
+
 app.on("window-all-closed", () => {
+  isQuitting = true;
+  stopSimulatedAudioFallback();
+
   if (audioBridge) {
     audioBridge.stop();
   }

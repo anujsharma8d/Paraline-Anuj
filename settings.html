@@ -23,7 +23,7 @@
             <div class="sidebar-header">
                 <h2>Paraline</h2>
                 <span class="sidebar-brand-tag">Audio Visualizer</span>
-                <div class="sidebar-version">v1.2.0</div>
+                <div class="sidebar-version">v2.0.0</div>
             </div>
             <ul class="nav-links">
                 <li>
@@ -114,6 +114,7 @@
                     <div class="input-group" style="margin-top: 10px;">
                         <select class="styled-select" id="theme-selector">
                             <option value="ambientWave">Ambient Wave</option>
+                            <option value="auroraDrift">Aurora Drift</option>
                             <option value="reactiveBorder">Reactive Border</option>
                             <option value="flowBorder">Flow Border</option>
                             <option value="sideBars">Side Bars</option>
@@ -123,7 +124,6 @@
                             <option value="snowBubbleParticles">Snow Particles</option>
                             <option value="edgeCrystals">Edge Crystals</option>
                             <option value="sideBraids">Side Braids</option>
-                            <option value="auroraDrift">Aurora Drift</option>
                         </select>
                     </div>
                 </div>
@@ -134,6 +134,11 @@
                     <h3>Theme Properties</h3>
                     <div id="dynamic-theme-settings">
                         <!-- Populated dynamically by settings.js based on selected theme -->
+                    </div>
+                        <div style="margin-top:16px;">
+                            <button id="btn-reset-theme" class="btn-secondary">
+                                Reset to Default
+                            </button>
                     </div>
                 </div>
             </section>
@@ -166,15 +171,15 @@
 
                         <div class="color-picker-container" id="gradient-colors" style="margin-top: 20px;">
                             <div class="color-stop">
-                                <input type="color" class="color-input custom-trigger" id="color1">
+                                <input type="color" class="color-input custom-trigger" id="color1" value="#00f2fe">
                                 <label for="color1">Start</label>
                             </div>
                             <div class="color-stop">
-                                <input type="color" class="color-input custom-trigger" id="color2">
+                                <input type="color" class="color-input custom-trigger" id="color2" value="#4facfe">
                                 <label for="color2">Middle</label>
                             </div>
                             <div class="color-stop">
-                                <input type="color" class="color-input custom-trigger" id="color3">
+                                <input type="color" class="color-input custom-trigger" id="color3" value="#8ee2ff">
                                 <label for="color3">End</label>
                             </div>
                         </div>
@@ -612,7 +617,7 @@
                         <div class="about-brand">
                             <div class="about-logo-text">PARALINE</div>
                             <p class="about-tagline">Desktop Audio Visualizer for Windows</p>
-                            <div class="about-version-badge">v1.2.0 — Stable Release</div>
+                            <div class="about-version-badge">v2.0.0 — Stable Release</div>
                         </div>
 
                         <div class="about-divider"></div>
