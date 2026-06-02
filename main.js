@@ -456,6 +456,23 @@ function deleteThemeProfile(profileName) {
   return profiles;
 }
 
+function duplicateThemeProfile(srcName, destName) {
+  if (
+    typeof srcName !== "string" || srcName.trim() === "" ||
+    typeof destName !== "string" || destName.trim() === "" ||
+    destName === "__proto__" || destName === "constructor" || destName === "prototype"
+  ) {
+    return null;
+  }
+  const profiles = settingsStore.loadProfiles();
+  if (!profiles[srcName]) {
+    return null;
+  }
+  profiles[destName] = JSON.parse(JSON.stringify(profiles[srcName]));
+  settingsStore.saveProfiles(profiles);
+  return profiles;
+}
+
 function getThemeProfiles() {
   return settingsStore.loadProfiles();
 }
@@ -1452,6 +1469,10 @@ app.whenReady().then(() => {
 
   ipcMain.handle("theme-profiles:delete", (_event, profileName) => {
     return deleteThemeProfile(profileName);
+  });
+
+  ipcMain.handle("theme-profiles:duplicate", (_event, srcProfileName, destProfileName) => {
+    return duplicateThemeProfile(srcProfileName, destProfileName);
   });
 
   ipcMain.handle("theme-profiles:reset", () => {
