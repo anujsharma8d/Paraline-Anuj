@@ -11,16 +11,16 @@ import InstallationGuide from "./components/pages/InstallationGuide";
 import TermsPage from "./components/pages/TermsPage";
 import PrivacyPolicy from "./components/pages/PrivacyPolicy";
 import FAQPage from "./components/pages/FAQPage";
+import SystemRequirements from "./components/pages/SystemRequirements"; // ← NEW
 
-const downloadUrl = import.meta.env.VITE_DOWNLOAD_URL || "https://github.com/SamXop123/Paraline/releases/download/v1.2.0/Paraline-Setup-1.2.0.exe";
+const downloadUrl = import.meta.env.VITE_DOWNLOAD_URL || "https://github.com/SamXop123/Paraline/releases/download/v2.0.0/Paraline-Setup-2.0.0.exe";
 const isHostedInstaller = /^https?:\/\//.test(downloadUrl);
 const gaMeasurementId = import.meta.env.VITE_GA_MEASUREMENT_ID || "";
-const analyticsEnabled = import.meta.env.VITE_ENABLE_ANALYTICS === "true";
 const githubUrl = "https://github.com/SamXop123/Paraline";
 
 export default function App() {
   useEffect(() => {
-    if (!analyticsEnabled || !gaMeasurementId) {
+    if (!gaMeasurementId) {
       return undefined;
     }
 
@@ -93,26 +93,32 @@ export default function App() {
 
       <div className="relative z-10">
         <header className="fixed inset-x-0 top-0 z-40 border border-gray-700 bg-[#02040c]/10 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 sm:px-8">
-            <button
-              onClick={toggleSidebar}
-              className="absolute top-5 left-5">
-                <img src='./sidebar-icons/menu.svg' className="h-8 w-10 object-contain"/>
-            </button>
+          <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-5 sm:px-8">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={toggleSidebar}
+                className="shrink-0"
+                aria-label={isSidebarOpen ? "Close navigation menu" : "Open navigation menu"}
+                aria-expanded={isSidebarOpen}
+              >
+                <img src="./sidebar-icons/menu.svg" className="h-8 w-10 object-contain" />
+              </button>
 
-            <a 
-              href="#hero" 
-              onClick={() => setCurrentPage("home")}
-              className="text-xs uppercase tracking-[0.45em] text-white/70 transition hover:text-white"
-            >
-              Paraline
-            </a>
+              <a
+                href="#hero"
+                onClick={() => setCurrentPage("home")}
+                className="text-xs font-bold uppercase tracking-[0.3em] text-white/90 transition hover:text-white sm:text-sm sm:tracking-[0.45em]"
+              >
+                Paraline
+              </a>
+            </div>
+
             <div className="flex items-center gap-3">
               <a
                 href={githubUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="text-[11px] uppercase tracking-[0.28em] text-white/52 transition hover:text-white"
+                className="hidden text-[11px] uppercase tracking-[0.28em] text-white/52 transition hover:text-white md:block"
               >
                 GitHub
               </a>
@@ -120,7 +126,7 @@ export default function App() {
                 href={downloadUrl}
                 download={isHostedInstaller ? undefined : "Paraline-Setup.exe"}
                 onClick={() => trackDownloadClick("navbar")}
-                className="rounded-full border border-white/12 bg-white/6 px-4 py-2 text-[11px] uppercase tracking-[0.28em] text-white/82 backdrop-blur transition hover:border-cyan-300/35 hover:bg-white/10 hover:text-white"
+                className="whitespace-nowrap rounded-full bg-white px-3.5 py-1.5 text-[9px] font-bold uppercase tracking-widest text-slate-950 transition hover:scale-[1.02] hover:bg-cyan-100 sm:px-5 sm:py-2.5 sm:text-[11px]"
               >
                 Windows Installer
               </a>
@@ -136,7 +142,8 @@ export default function App() {
                   downloadUrl={downloadUrl}
                   isHostedInstaller={isHostedInstaller}
                   onDownloadClick={() => trackDownloadClick("hero")}
-                />
+                  setCurrentPage={setCurrentPage}
+              />
               </section>
               <section id="experience" className="scroll-mt-28">
                 <ExperienceSection />
@@ -149,6 +156,7 @@ export default function App() {
                   downloadUrl={downloadUrl}
                   isHostedInstaller={isHostedInstaller}
                   onDownloadClick={() => trackDownloadClick("cta")}
+                  setCurrentPage={setCurrentPage}
                 />
               </section>
             </>
@@ -160,12 +168,14 @@ export default function App() {
             <PrivacyPolicy setCurrentPage={setCurrentPage} />
           ) : currentPage === "faq" ? (
             <FAQPage setCurrentPage={setCurrentPage} />
+          ) : currentPage === "system-requirements" ? ( // ← NEW
+            <SystemRequirements setCurrentPage={setCurrentPage} />
           ) : null}
         </main>
         <Footer setCurrentPage={setCurrentPage} />
       </div>
 
-      {analyticsEnabled ? <Analytics /> : null}
+      <Analytics />
     </div>
   );
 }

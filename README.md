@@ -344,6 +344,18 @@ If you want to explore the implementation details, local setup, or development w
 
 **[Open Developer Notes](./docs/DEVELOPMENT.md)**
 
+For the complete build, packaging, and distribution workflow — including how to compile the audio helper, generate a packaged app, and produce a Windows installer:
+
+**[Open Build & Distribution Guide](./BUILD.md)**
+
+---
+
+## ✦ Troubleshooting & Support
+
+If you encounter any setup or runtime issues with audio capture, visualizer reaction, C# compilation, or background behavior:
+
+**[Open Troubleshooting Guide](./docs/TROUBLESHOOTING.md)**
+
 ---
 
 <div align="center">
