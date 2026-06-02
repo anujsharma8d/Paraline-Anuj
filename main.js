@@ -1624,11 +1624,32 @@ app.whenReady().then(() => {
 
       settingsStore.save(cleanSettings);
 
-      settingsStore.saveProfiles(
-          importedBackup.profiles || {}
-      );
+    const safeProfiles = {};
+
+    for (const [name, profile] of Object.entries(importedBackup.profiles || {})) {
+
+        if (
+            typeof name !== "string" ||
+            name === "__proto__" ||
+            name === "constructor" ||
+            name === "prototype"
+        ) {
+            continue;
+        }
+
+        safeProfiles[name] = sanitizeSettings(profile || {});
+    }
+
+    settingsStore.saveProfiles(safeProfiles);
 
       visualizerSettings = cleanSettings;
+
+      applyStartupSettings(visualizerSettings.launchOnStartup);
+      applyFocusModeState();
+
+      if (themeAgent) {
+          themeAgent.start();
+      }
 
       sendVisualizerSettings();
       refreshTrayMenu();
