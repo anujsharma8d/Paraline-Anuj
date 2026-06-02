@@ -587,13 +587,19 @@ refreshThemeProfiles();
 
             if (!selectedProfile) return;
 
-            const result = await window.paralineApp.duplicateThemeProfile(
-                selectedProfile
-            );
+            try {
+                const result = await window.paralineApp.duplicateThemeProfile(selectedProfile);
 
-            if (!result.success) {
-                alert(result.error || "Failed to duplicate profile");
-                return;
+                if (!result || !result.success) {
+                    alert(result?.error || "Failed to duplicate profile");
+                    return;
+                }
+
+                alert(`Profile duplicated as "${result.profileName}"`);
+                refreshThemeProfiles();
+            } catch (error) {
+                alert("Failed to duplicate profile");
+                console.error(error);
             }
 
             alert(`Profile duplicated as "${result.profileName}"`);
