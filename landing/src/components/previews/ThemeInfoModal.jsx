@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import PreviewStage from "./PreviewStage";
 
 export default function ThemeInfoModal({ theme, onClose }) {
@@ -29,6 +29,7 @@ export default function ThemeInfoModal({ theme, onClose }) {
         aria-modal="true"
         aria-label={`${theme.name} details`}
         className="fixed inset-0 z-50 flex items-center justify-center p-4 outline-none"
+        onClick={onClose}
         style={{ animation: "modalIn 0.3s cubic-bezier(0.22,1,0.36,1) both" }}
       >
         <style>{`
