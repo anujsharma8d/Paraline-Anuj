@@ -1614,10 +1614,13 @@ app.whenReady().then(() => {
           require("fs").readFileSync(filePath, "utf8")
       );
 
-      if (!importedBackup || typeof importedBackup !== "object") {
+      if (
+          !importedBackup ||
+          typeof importedBackup !== "object" ||
+          Array.isArray(importedBackup)
+      ) {
           return { success: false, error: "Invalid backup format" };
       }
-
       const cleanSettings = sanitizeSettings(
           importedBackup.settings || {}
       );
