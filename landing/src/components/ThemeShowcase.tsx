@@ -199,11 +199,16 @@ export function ThemeShowcase() {
   const handleApply = async (themeName: string) => {
     try {
       // Connect to the backend API to physically apply the theme on the desktop
-      await fetch(getThemesEndpoint(), {
+      const response = await fetch(getThemesEndpoint(), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "apply_theme", theme: themeName })
       });
+
+      if (!response.ok) {
+        console.error("Failed to apply theme. Server responded with status:", response.status);
+        return; // Do not set applied state on failure
+      }
     } catch (e) {
       console.warn("Backend not running, simulating theme application:", e);
     }

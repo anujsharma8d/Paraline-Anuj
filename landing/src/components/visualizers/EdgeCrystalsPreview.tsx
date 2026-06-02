@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 export function EdgeCrystalsPreview({ active }: { active: boolean }) {
   // Crystals placed along the left and right edges (increased count to remove gaps)
   const crystals = Array.from({ length: 10 });
+  const midpoint = (crystals.length - 1) / 2;
 
   return (
     <div className="absolute inset-0 overflow-hidden">
@@ -17,7 +18,7 @@ export function EdgeCrystalsPreview({ active }: { active: boolean }) {
             key={`l-${i}`}
             className="h-1 w-6 bg-white rounded-r-md origin-left"
             style={{
-              rotate: (i - 2) * -15, // Fan out slightly
+              rotate: (i - midpoint) * -15, // Fan out symmetrically from center
               filter: "drop-shadow(0 0 8px rgba(168,85,247,0.8))"
             }}
             animate={{
@@ -42,7 +43,7 @@ export function EdgeCrystalsPreview({ active }: { active: boolean }) {
             key={`r-${i}`}
             className="h-1 w-6 bg-white rounded-l-md origin-right"
             style={{
-              rotate: (i - 2) * 15,
+              rotate: (i - midpoint) * 15, // Fan out symmetrically from center
               filter: "drop-shadow(0 0 8px rgba(56,189,248,0.8))"
             }}
             animate={{

@@ -27,9 +27,18 @@ export default function SettingsPage() {
   const [groups, setGroups] = useState(initialGroups);
 
   const toggleSetting = (groupIdx: number, settingIdx: number) => {
-    const newGroups = [...groups];
-    newGroups[groupIdx].settings[settingIdx].active = !newGroups[groupIdx].settings[settingIdx].active;
-    setGroups(newGroups);
+    setGroups((prev) =>
+      prev.map((g, gi) =>
+        gi === groupIdx
+          ? {
+              ...g,
+              settings: g.settings.map((s, si) =>
+                si === settingIdx ? { ...s, active: !s.active } : s
+              ),
+            }
+          : g
+      )
+    );
   };
 
   return (
@@ -95,7 +104,8 @@ export default function SettingsPage() {
                     {/* Premium Interactive Toggle */}
                     <button 
                       onClick={() => toggleSetting(groupIdx, settingIdx)}
-                      className={`relative z-10 inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border transition-all duration-500 ease-out focus:outline-none overflow-hidden ${
+                      aria-pressed={setting.active}
+                      className={`relative z-10 inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border transition-all duration-500 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black/20 overflow-hidden active:scale-95 ${
                         setting.active 
                           ? 'bg-cyan-500/20 border-cyan-400/50 shadow-[0_0_20px_rgba(34,211,238,0.3)]' 
                           : 'bg-white/[0.05] border-white/10 hover:bg-white/[0.08]'

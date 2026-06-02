@@ -93,7 +93,9 @@ export default function FAQPage() {
               >
                 <button
                   onClick={() => setOpenIndex(isOpen ? null : idx)}
-                  className="flex w-full items-center justify-between p-6 md:px-8 md:py-6 text-left focus:outline-none group"
+                  aria-expanded={isOpen}
+                  aria-controls={`faq-panel-${idx}`}
+                  className="flex w-full items-center justify-between p-6 md:px-8 md:py-6 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 rounded-3xl group"
                 >
                   <span className={`text-[15px] font-bold transition-colors duration-300 ${isOpen ? "text-white" : "text-white/80 group-hover:text-white"}`}>
                     {faq.question}
@@ -110,6 +112,8 @@ export default function FAQPage() {
                 <AnimatePresence initial={false}>
                   {isOpen && (
                     <motion.div
+                      id={`faq-panel-${idx}`}
+                      role="region"
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}

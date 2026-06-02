@@ -1,8 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useId } from "react";
 
 export function AuroraDriftPreview({ active }: { active: boolean }) {
+  const instanceId = useId().replace(/:/g, "");
   // We'll create several layered SVG paths that drift horizontally
   // and scale vertically to simulate highly-reactive aurora curtains.
   const curtains = [
@@ -32,7 +34,7 @@ export function AuroraDriftPreview({ active }: { active: boolean }) {
         >
           <svg className="absolute bottom-0 w-full h-[120%]" preserveAspectRatio="none" viewBox="0 0 100 100">
             <defs>
-              <linearGradient id={`aurora-grad-${i}`} x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id={`${instanceId}-aurora-grad-${i}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="currentColor" stopOpacity="0" />
                 <stop offset="10%" stopColor="currentColor" stopOpacity={curtain.opacity} />
                 <stop offset="50%" stopColor="currentColor" stopOpacity={curtain.opacity * 1.5} />
@@ -42,18 +44,18 @@ export function AuroraDriftPreview({ active }: { active: boolean }) {
             {/* Draw a wavy curtain that looks like ribbons */}
             <path
               d={`M0,100 C10,${80 - i*5} 20,${60 + i*10} 30,100 C40,${70 - i*15} 50,${90 + i*5} 60,100 C70,${50 - i*10} 80,${80 + i*20} 90,100 C95,${70} 100,100 100,100 L0,100 Z`}
-              fill={`url(#aurora-grad-${i})`}
+              fill={`url(#${instanceId}-aurora-grad-${i})`}
               className="blur-[6px]" // Strong blur to simulate glowing atmospheric gas
             />
             <path
               d={`M0,100 C15,${60 + i*10} 25,${40 - i*5} 35,100 C45,${80 + i*15} 55,${50 - i*10} 65,100 C75,${60 + i*5} 85,${90 - i*20} 100,100 L0,100 Z`}
-              fill={`url(#aurora-grad-${i})`}
+              fill={`url(#${instanceId}-aurora-grad-${i})`}
               className="blur-[10px] opacity-90"
             />
             {/* Super bright core */}
             <path
               d={`M0,100 C10,${80 - i*5} 20,${60 + i*10} 30,100 C40,${70 - i*15} 50,${90 + i*5} 60,100 C70,${50 - i*10} 80,${80 + i*20} 90,100 C95,${70} 100,100 100,100 L0,100 Z`}
-              fill={`url(#aurora-grad-${i})`}
+              fill={`url(#${instanceId}-aurora-grad-${i})`}
               className="blur-[2px] opacity-70 mix-blend-add" 
             />
           </svg>

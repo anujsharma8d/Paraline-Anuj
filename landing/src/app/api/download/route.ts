@@ -6,10 +6,16 @@ export async function GET() {
     await new Promise((resolve) => setTimeout(resolve, 800));
 
     // Fetch the latest release from the actual GitHub repository
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
     const response = await fetch("https://api.github.com/repos/SamXop123/Paraline/releases/latest", {
-      next: { revalidate: 3600 } // Cache for 1 hour to avoid rate limits
+      next: { revalidate: 3600 }, // Cache for 1 hour to avoid rate limits
+      signal: controller.signal
     });
     
+    clearTimeout(timeoutId);
+
     if (!response.ok) {
       throw new Error("Failed to fetch GitHub releases");
     }
@@ -30,8 +36,16 @@ export async function GET() {
       filename: exeAsset.name,
       message: "Download ready!"
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Download API Error:", error);
+
+    if (error?.name === 'AbortError') {
+      return NextResponse.json(
+        { success: false, message: "Request timed out fetching releases." },
+        { status: 504 }
+      );
+    }
+
     // Fallback to the releases page if API fails
     return NextResponse.json({
       success: true,

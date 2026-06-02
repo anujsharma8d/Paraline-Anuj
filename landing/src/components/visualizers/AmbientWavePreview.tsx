@@ -31,14 +31,14 @@ export function AmbientWavePreview({ active }: { active: boolean }) {
         ctx.stroke();
       };
 
+      // Add a subtle glow filter
+      ctx.shadowBlur = active ? 15 : 5;
+      ctx.shadowColor = "rgba(56, 189, 248, 0.5)";
+
       // Top wave
       drawWave(canvas.height * 0.3, active ? 15 : 5, 0, active ? 0.8 : 0.3);
       // Bottom wave
       drawWave(canvas.height * 0.7, active ? 10 : 3, Math.PI, active ? 0.5 : 0.2);
-
-      // Add a subtle glow filter
-      ctx.shadowBlur = active ? 15 : 5;
-      ctx.shadowColor = "rgba(56, 189, 248, 0.5)";
 
       animationFrameId = requestAnimationFrame(render);
     };

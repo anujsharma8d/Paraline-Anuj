@@ -1,8 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useId } from "react";
 
 export function ReactiveBorderPreview({ active }: { active: boolean }) {
+  const gradientId = `reactive-gradient-${useId().replace(/:/g, "")}`;
+
   return (
     <div className="absolute inset-0 overflow-hidden">
       <div className="absolute inset-0 bg-[#060913]/90 z-0" />
@@ -15,7 +18,7 @@ export function ReactiveBorderPreview({ active }: { active: boolean }) {
           height="100%"
           rx="10"
           fill="none"
-          stroke="url(#reactive-gradient)"
+          stroke={`url(#${gradientId})`}
           strokeWidth="2"
           animate={{
             opacity: active ? [0.4, 1, 0.4] : [0.1, 0.3, 0.1],
@@ -32,7 +35,7 @@ export function ReactiveBorderPreview({ active }: { active: boolean }) {
           }}
         />
         <defs>
-          <linearGradient id="reactive-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#38bdf8" />
             <stop offset="50%" stopColor="#a855f7" />
             <stop offset="100%" stopColor="#38bdf8" />
