@@ -10,7 +10,17 @@ function createAudioBridge(sendLevel, onStatusChange = () => {}) {
     reason: "Helper not started yet."
   };
 
+  let lastStatusUpdate = 0; // FIX: used for throttling stderr updates
+
   function updateStatus(nextStatus) {
+    // FIX: prevent identical state spam
+    if (
+      helperStatus.mode === nextStatus.mode &&
+      helperStatus.reason === nextStatus.reason
+    ) {
+      return;
+    }
+
     helperStatus = nextStatus;
     onStatusChange(helperStatus);
   }
@@ -53,27 +63,25 @@ function createAudioBridge(sendLevel, onStatusChange = () => {}) {
     });
 
     let helperReady = false;
-
     let stdoutBuffer = "";
 
     helperProcess.stdout.on("data", (chunk) => {
       if (!helperReady) {
-  helperReady = true;
+        helperReady = true;
 
-  updateStatus({
-    mode: "helper",
-    reason: "C# helper process connected."
-  });
-}
+        updateStatus({
+          mode: "helper",
+          reason: "C# helper process connected."
+        });
+      }
+
       stdoutBuffer += chunk.toString();
 
       const lines = stdoutBuffer.split(/\r?\n/);
       stdoutBuffer = lines.pop() || "";
 
       for (const line of lines) {
-        if (!line.trim()) {
-          continue;
-        }
+        if (!line.trim()) continue;
 
         try {
           const message = JSON.parse(line);
@@ -82,19 +90,32 @@ function createAudioBridge(sendLevel, onStatusChange = () => {}) {
             sendLevel(message.value);
           }
         } catch (_error) {
-  console.warn("Invalid helper message received.");
-  continue;
-}
+          console.warn("Invalid helper message received.");
+          continue;
         }
       }
-    };
+    });
 
     helperProcess.stderr.on("data", (chunk) => {
+      const errorMessage = chunk.toString().trim();
+
+      // FIX: always log raw stderr for debugging
+      console.error(errorMessage);
+
+      const now = Date.now();
+
+      // FIX: throttle UI updates to avoid flood (max 1 per 1000ms)
+      if (now - lastStatusUpdate < 1000) {
+        return;
+      }
+
+      lastStatusUpdate = now;
+
       updateStatus({
         mode: "helper-error",
         reason: [
           "Audio helper error: ",
-          chunk.toString().trim() || "Helper reported an error.",
+          errorMessage || "Helper reported an error.",
           "\n",
           "Troubleshooting:",
           "\n- Check if your audio device is in use by another app.",
@@ -106,6 +127,7 @@ function createAudioBridge(sendLevel, onStatusChange = () => {}) {
 
     helperProcess.on("exit", (code) => {
       helperProcess = null;
+
       updateStatus({
         mode: "simulated",
         reason: [
