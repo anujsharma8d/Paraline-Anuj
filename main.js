@@ -431,6 +431,36 @@ function saveThemeProfile(profileName) {
   return profiles;
 }
 
+function duplicateThemeProfile(profileName) {
+    const profiles = settingsStore.loadProfiles();
+
+    if (!profiles[profileName]) {
+        return {
+            success: false,
+            error: "Profile not found"
+        };
+    }
+
+    let newName = `${profileName} (Copy)`;
+    let counter = 2;
+
+    while (profiles[newName]) {
+        newName = `${profileName} (Copy ${counter})`;
+        counter++;
+    }
+
+    profiles[newName] = JSON.parse(
+        JSON.stringify(profiles[profileName])
+    );
+
+    settingsStore.saveProfiles(profiles);
+
+    return {
+        success: true,
+        profileName: newName
+    };
+}
+
 function loadThemeProfile(profileName) {
   const profiles = settingsStore.loadProfiles();
 
@@ -1457,6 +1487,10 @@ app.whenReady().then(() => {
   ipcMain.handle("theme-profiles:reset", () => {
     resetAllSettings();
     return getRendererSettings();
+  });
+
+  ipcMain.handle('theme-profiles:duplicate', async (_, profileName) => {
+      return duplicateThemeProfile(profileName);
   });
 
   ipcMain.handle("theme-profiles:export", async (_event, profileName) => {

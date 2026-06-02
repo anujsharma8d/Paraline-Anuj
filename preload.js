@@ -105,5 +105,11 @@ contextBridge.exposeInMainWorld("paralineApp", {
     ipcRenderer.invoke("theme-profiles:import"),
 
   resetThemeSettings: () =>
-    ipcRenderer.invoke("theme-profiles:reset")
+    ipcRenderer.invoke("theme-profiles:reset"),
+
+  duplicateThemeProfile: (profileName) =>
+    ipcRenderer.invoke(
+      'theme-profiles:duplicate',
+      profileName
+    ),
 });
