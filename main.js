@@ -467,9 +467,11 @@ function duplicateThemeProfile(profileName) {
         counter++;
     }
 
-    profiles[newName] = JSON.parse(
+    const duplicatedProfile = JSON.parse(
         JSON.stringify(profiles[profileName])
     );
+
+    profiles[newName] = sanitizeSettings(duplicatedProfile);
 
     settingsStore.saveProfiles(profiles);
 

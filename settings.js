@@ -328,7 +328,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnExportThemeProfile = document.getElementById('btn-export-theme-profile');
     const btnImportThemeProfile = document.getElementById('btn-import-theme-profile');
     const btnResetThemeProfile = document.getElementById('btn-reset-theme-profile');
-    const btnDuplicateThemeProfile =document.getElementById("btnDuplicateThemeProfile");
+    const btnDuplicateThemeProfile = document.getElementById("btnDuplicateThemeProfile");
 
     let presets = {
         "Ocean Blue": ["#00f2fe", "#4facfe", "#8ee2ff"],
@@ -581,18 +581,23 @@ refreshThemeProfiles();
         });
 
         btnDuplicateThemeProfile.addEventListener("click", async () => {
-            console.log("Duplicate clicked");
-            console.log(window.paraline);
-            console.log(window.paralineApp);
 
             const selectedProfile =
                 themeProfileSelector.value;
 
             if (!selectedProfile) return;
 
-            await window.paralineApp.duplicateThemeProfile(
+            const result = await window.paralineApp.duplicateThemeProfile(
                 selectedProfile
             );
+
+            if (!result.success) {
+                alert(result.error || "Failed to duplicate profile");
+                return;
+            }
+
+            alert(`Profile duplicated as "${result.profileName}"`);
+
             refreshThemeProfiles();
         });
 
