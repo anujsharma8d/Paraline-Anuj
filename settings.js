@@ -331,6 +331,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnDuplicateThemeProfile = document.getElementById('btnDuplicateThemeProfile');
     
 
+    // Names that must not be used as object keys because they shadow prototype
+    // properties, which would allow an attacker to corrupt the JS execution
+    // context of the settings window via a crafted localStorage value.
+    const RESERVED_PRESET_NAMES = new Set([
+        "__proto__", "constructor", "prototype",
+        "toString", "valueOf", "hasOwnProperty",
+        "isPrototypeOf", "propertyIsEnumerable",
+        "toLocaleString", "__defineGetter__", "__defineSetter__",
+        "__lookupGetter__", "__lookupSetter__"
+    ]);
+
+    function isSafePresetName(name) {
+        return (
+            typeof name === "string" &&
+            name.length > 0 &&
+            name.length <= 64 &&
+            !RESERVED_PRESET_NAMES.has(name)
+        );
+    }
+
     let presets = {
         "Ocean Blue": ["#00f2fe", "#4facfe", "#8ee2ff"],
         "Sunset": ["#ff512f", "#f09819", "#ffb347"],
@@ -340,7 +360,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load from local storage if available
     try {
         const savedPresets = localStorage.getItem('paraline_presets');
-        if (savedPresets) presets = JSON.parse(savedPresets);
+        if (savedPresets) {
+            const parsed = JSON.parse(savedPresets);
+            // Only accept plain objects with safe keys and array values.
+            if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
+                const sanitized = {};
+                for (const [key, val] of Object.entries(parsed)) {
+                    if (isSafePresetName(key) && Array.isArray(val) && val.length === 3) {
+                        sanitized[key] = val;
+                    }
+                }
+                presets = sanitized;
+            }
+        }
     } catch(e) {}
 
     function updatePresetDropdown() {
@@ -368,7 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     savePresetBtn.addEventListener('click', () => {
         const presetName = presetNameInput.value.trim();
-        if (presetName !== "") {
+        if (presetName !== "" && isSafePresetName(presetName)) {
             presets[presetName] = [color1.value, color2.value, color3.value];
             updatePresetDropdown();
             presetSelector.value = presetName;
