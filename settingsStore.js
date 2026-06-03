@@ -609,7 +609,13 @@ function createSettingsStore(userDataPath) {
       }
 
       const fileContent = fs.readFileSync(profilesPath, "utf8");
-      return JSON.parse(fileContent);
+      const parsed = JSON.parse(fileContent);
+      // JSON.parse can return null, arrays, or primitives. Guard against any
+      // non-plain-object result so callers always receive a key-value map.
+      if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+        return {};
+      }
+      return parsed;
     } catch (_error) {
       return {};
     }
