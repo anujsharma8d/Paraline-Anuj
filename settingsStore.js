@@ -291,7 +291,7 @@ function sanitizeReactiveBorder(input = {}) {
     intensity: pick(input.intensity, VALID_LEVELS, DEFAULT_SETTINGS.reactiveBorder.intensity),
     borderThickness: pick(input.borderThickness, VALID_BORDER_THICKNESS, DEFAULT_SETTINGS.reactiveBorder.borderThickness),
     glowStrength: pick(input.glowStrength, VALID_GLOW_STRENGTHS, DEFAULT_SETTINGS.reactiveBorder.glowStrength),
-    customColors: input.customColors,
+    customColors: sanitizeCustomColors(input.customColors, DEFAULT_SETTINGS.customColors),
     customThickness: input.customThickness,
     customSensitivity: input.customSensitivity
   };
@@ -304,7 +304,7 @@ function sanitizeFlowBorder(input = {}) {
     segmentLength: pick(input.segmentLength, VALID_FLOW_SEGMENTS, DEFAULT_SETTINGS.flowBorder.segmentLength),
     glowStrength: pick(input.glowStrength, VALID_GLOW_STRENGTHS, DEFAULT_SETTINGS.flowBorder.glowStrength),
     colorStyle: pick(input.colorStyle, VALID_FLOW_COLOR_STYLES, DEFAULT_SETTINGS.flowBorder.colorStyle),
-    customColors: input.customColors,
+    customColors: sanitizeCustomColors(input.customColors, DEFAULT_SETTINGS.customColors),
     customThickness: input.customThickness,
     customSensitivity: input.customSensitivity,
     customSpeed: input.customSpeed
@@ -312,9 +312,7 @@ function sanitizeFlowBorder(input = {}) {
 }
 
 function sanitizeSideBars(input = {}) {
-  const customColors = Array.isArray(input.customColors) && input.customColors.length === 3 
-      ? input.customColors 
-      : DEFAULT_SETTINGS.sideBars.customColors;
+  const customColors = sanitizeCustomColors(input.customColors, DEFAULT_SETTINGS.sideBars.customColors);
 
   return {
     colorStyle: pick(input.colorStyle, VALID_SIDE_BARS_COLOR_STYLES, DEFAULT_SETTINGS.sideBars.colorStyle),
@@ -531,9 +529,7 @@ function sanitizeFocusMode(input = {}) {
 function sanitizeSettings(input = {}) {
   const source = migrateLegacySettings(input);
 
-  const customColors = Array.isArray(source.customColors) && source.customColors.length === 3
-    ? source.customColors
-    : DEFAULT_SETTINGS.customColors;
+  const customColors = sanitizeCustomColors(source.customColors, DEFAULT_SETTINGS.customColors);
 
   return {
     launchOnStartup: typeof source.launchOnStartup === "boolean" ? source.launchOnStartup : DEFAULT_SETTINGS.launchOnStartup,
