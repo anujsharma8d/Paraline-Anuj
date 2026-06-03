@@ -1,9 +1,9 @@
 const fs = require("fs");
 const path = require("path");
 
-// Validates that a value is a CSS hex color string (#RGB or #RRGGBB).
+// Validates that a value is a CSS hex color string (#RRGGBB).
 function isValidHex(val) {
-  return typeof val === "string" && /^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/.test(val);
+  return typeof val === "string" && /^#[0-9a-fA-F]{6}$/.test(val);
 }
 
 // Returns input.customColors if it is an array of exactly 3 valid hex strings;
