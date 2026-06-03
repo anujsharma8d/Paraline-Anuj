@@ -201,6 +201,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const intervalMinutes = document.getElementById('intervalMinutes');
     const dayThemeSelect = document.getElementById('dayThemeSelect');
     const nightThemeSelect = document.getElementById('nightThemeSelect');
+    const dayStartHourInput = document.getElementById('dayStartHourInput');
+    const nightStartHourInput = document.getElementById('nightStartHourInput');
+
+    function formatHour(hour) {
+        if (hour === 0) return '12 AM';
+        if (hour === 12) return '12 PM';
+        return hour > 12 ? `${hour - 12} PM` : `${hour} AM`;
+    }
+
+    function updateThemeLabels(dayStart, nightStart) {
+        const dayThemeLabel = document.getElementById('dayThemeLabel');
+        const nightThemeLabel = document.getElementById('nightThemeLabel');
+        if (dayThemeLabel) {
+            dayThemeLabel.textContent = `Daytime Theme (${formatHour(dayStart)} - ${formatHour(nightStart)}):`;
+        }
+        if (nightThemeLabel) {
+            nightThemeLabel.textContent = `Nighttime Theme (${formatHour(nightStart)} - ${formatHour(dayStart)}):`;
+        }
+    }
 
     function toggleAutoControls(isEnabled) {
         if (themeAutoControls) {
@@ -243,6 +262,32 @@ document.addEventListener('DOMContentLoaded', () => {
     if (nightThemeSelect) {
         nightThemeSelect.addEventListener('change', (e) => {
             updateAutomationSetting({ nightTheme: e.target.value });
+        });
+    }
+
+    if (dayStartHourInput) {
+        dayStartHourInput.addEventListener('change', (e) => {
+            let val = parseInt(e.target.value, 10);
+            if (isNaN(val) || val < 0 || val > 23) {
+                val = 6;
+                dayStartHourInput.value = val;
+            }
+            updateAutomationSetting({ dayStartHour: val });
+            const nightStart = nightStartHourInput ? parseInt(nightStartHourInput.value, 10) : 18;
+            updateThemeLabels(val, isNaN(nightStart) ? 18 : nightStart);
+        });
+    }
+
+    if (nightStartHourInput) {
+        nightStartHourInput.addEventListener('change', (e) => {
+            let val = parseInt(e.target.value, 10);
+            if (isNaN(val) || val < 0 || val > 23) {
+                val = 18;
+                nightStartHourInput.value = val;
+            }
+            updateAutomationSetting({ nightStartHour: val });
+            const dayStart = dayStartHourInput ? parseInt(dayStartHourInput.value, 10) : 6;
+            updateThemeLabels(isNaN(dayStart) ? 6 : dayStart, val);
         });
     }
 
@@ -701,6 +746,15 @@ refreshThemeProfiles();
                 if (nightThemeSelect) {
                     nightThemeSelect.value = automation.nightTheme || "reactiveBorder";
                 }
+                const dayStart = automation.dayStartHour !== undefined ? automation.dayStartHour : 6;
+                const nightStart = automation.nightStartHour !== undefined ? automation.nightStartHour : 18;
+                if (dayStartHourInput) {
+                    dayStartHourInput.value = dayStart;
+                }
+                if (nightStartHourInput) {
+                    nightStartHourInput.value = nightStart;
+                }
+                updateThemeLabels(dayStart, nightStart);
             }
             
             // set custom variables into UI if they exist globally or on the active theme
@@ -747,6 +801,15 @@ refreshThemeProfiles();
                 if (nightThemeSelect && automation.nightTheme !== undefined) {
                     nightThemeSelect.value = automation.nightTheme;
                 }
+                if (dayStartHourInput && automation.dayStartHour !== undefined) {
+                    dayStartHourInput.value = automation.dayStartHour;
+                }
+                if (nightStartHourInput && automation.nightStartHour !== undefined) {
+                    nightStartHourInput.value = automation.nightStartHour;
+                }
+                const dayStart = automation.dayStartHour !== undefined ? automation.dayStartHour : (cachedSettings.themeAutomation?.dayStartHour ?? 6);
+                const nightStart = automation.nightStartHour !== undefined ? automation.nightStartHour : (cachedSettings.themeAutomation?.nightStartHour ?? 18);
+                updateThemeLabels(dayStart, nightStart);
             }
 
             if (nextSettings.paused !== undefined) {
