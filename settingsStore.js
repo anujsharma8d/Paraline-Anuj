@@ -1,6 +1,21 @@
 const fs = require("fs");
 const path = require("path");
 
+// Validates that a value is a CSS hex color string (#RRGGBB).
+function isValidHex(val) {
+  return typeof val === "string" && /^#[0-9a-fA-F]{6}$/.test(val);
+}
+
+// Returns input.customColors if it is an array of exactly 3 valid hex strings;
+// otherwise returns the provided fallback. Used by all sanitize functions that
+// expose a customColors field so corrupted settings cannot reach the renderer.
+function sanitizeCustomColors(input, fallback) {
+  if (Array.isArray(input) && input.length === 3 && input.every(isValidHex)) {
+    return input;
+  }
+  return fallback;
+}
+
 const DEFAULT_SETTINGS = Object.freeze({
   launchOnStartup: false,
   selectedTheme: "ambientWave",
@@ -265,7 +280,7 @@ function sanitizeAmbientWave(input = {}) {
     sensitivity: pick(input.sensitivity, VALID_LEVELS, DEFAULT_SETTINGS.ambientWave.sensitivity),
     edgeMode: pick(input.edgeMode, VALID_EDGE_MODES, DEFAULT_SETTINGS.ambientWave.edgeMode),
     glowStrength: pick(input.glowStrength, VALID_GLOW_STRENGTHS, DEFAULT_SETTINGS.ambientWave.glowStrength),
-    customColors: input.customColors,
+    customColors: sanitizeCustomColors(input.customColors, DEFAULT_SETTINGS.customColors),
     customSensitivity: input.customSensitivity
   };
 }
@@ -276,7 +291,7 @@ function sanitizeReactiveBorder(input = {}) {
     intensity: pick(input.intensity, VALID_LEVELS, DEFAULT_SETTINGS.reactiveBorder.intensity),
     borderThickness: pick(input.borderThickness, VALID_BORDER_THICKNESS, DEFAULT_SETTINGS.reactiveBorder.borderThickness),
     glowStrength: pick(input.glowStrength, VALID_GLOW_STRENGTHS, DEFAULT_SETTINGS.reactiveBorder.glowStrength),
-    customColors: input.customColors,
+    customColors: sanitizeCustomColors(input.customColors, DEFAULT_SETTINGS.customColors),
     customThickness: input.customThickness,
     customSensitivity: input.customSensitivity
   };
@@ -289,7 +304,7 @@ function sanitizeFlowBorder(input = {}) {
     segmentLength: pick(input.segmentLength, VALID_FLOW_SEGMENTS, DEFAULT_SETTINGS.flowBorder.segmentLength),
     glowStrength: pick(input.glowStrength, VALID_GLOW_STRENGTHS, DEFAULT_SETTINGS.flowBorder.glowStrength),
     colorStyle: pick(input.colorStyle, VALID_FLOW_COLOR_STYLES, DEFAULT_SETTINGS.flowBorder.colorStyle),
-    customColors: input.customColors,
+    customColors: sanitizeCustomColors(input.customColors, DEFAULT_SETTINGS.customColors),
     customThickness: input.customThickness,
     customSensitivity: input.customSensitivity,
     customSpeed: input.customSpeed
@@ -297,9 +312,7 @@ function sanitizeFlowBorder(input = {}) {
 }
 
 function sanitizeSideBars(input = {}) {
-  const customColors = Array.isArray(input.customColors) && input.customColors.length === 3 
-      ? input.customColors 
-      : DEFAULT_SETTINGS.sideBars.customColors;
+  const customColors = sanitizeCustomColors(input.customColors, DEFAULT_SETTINGS.sideBars.customColors);
 
   return {
     colorStyle: pick(input.colorStyle, VALID_SIDE_BARS_COLOR_STYLES, DEFAULT_SETTINGS.sideBars.colorStyle),
@@ -319,7 +332,7 @@ function sanitizeFlatRipples(input = {}) {
     intensity: pick(input.intensity, VALID_LEVELS, DEFAULT_SETTINGS.flatRipples.intensity),
     colorStyle: pick(input.colorStyle, VALID_FLAT_RIPPLES_COLORS, DEFAULT_SETTINGS.flatRipples.colorStyle),
     speed: pick(input.speed, VALID_FLAT_RIPPLES_SPEEDS, DEFAULT_SETTINGS.flatRipples.speed),
-    customColors: input.customColors,
+    customColors: sanitizeCustomColors(input.customColors, DEFAULT_SETTINGS.customColors),
     customSensitivity: input.customSensitivity,
     customSpeed: input.customSpeed
   };
@@ -342,7 +355,7 @@ function sanitizeRippleFlow(input = {}) {
     intensity: pick(input.intensity, VALID_LEVELS, DEFAULT_SETTINGS.rippleFlow.intensity),
     sensitivity: pick(input.sensitivity, VALID_LEVELS, DEFAULT_SETTINGS.rippleFlow.sensitivity),
     colorStyle: pick(input.colorStyle, VALID_RIPPLE_FLOW_COLORS, DEFAULT_SETTINGS.rippleFlow.colorStyle),
-    customColors: input.customColors,
+    customColors: sanitizeCustomColors(input.customColors, DEFAULT_SETTINGS.customColors),
     customSensitivity: input.customSensitivity
   };
 }
@@ -364,7 +377,7 @@ function sanitizeEdgeCrystals(input = {}) {
     glowStrength: pick(input.glowStrength, VALID_GLOW_STRENGTHS, DEFAULT_SETTINGS.edgeCrystals.glowStrength),
     colorStyle: pick(input.colorStyle, VALID_EDGE_FLUTTER_COLORS, DEFAULT_SETTINGS.edgeCrystals.colorStyle),
     edgeMode: pick(input.edgeMode, VALID_EDGE_FLUTTER_MODES, DEFAULT_SETTINGS.edgeCrystals.edgeMode),
-    customColors: input.customColors,
+    customColors: sanitizeCustomColors(input.customColors, DEFAULT_SETTINGS.customColors),
     customGap: input.customGap,
     customSensitivity: input.customSensitivity,
     customSpeed: input.customSpeed
@@ -379,7 +392,7 @@ function sanitizeSideBraids(input = {}) {
     braidWidth: pick(input.braidWidth, VALID_BRAID_WIDTH, DEFAULT_SETTINGS.sideBraids.braidWidth),
     colorStyle: pick(input.colorStyle, VALID_BRAID_COLORS, DEFAULT_SETTINGS.sideBraids.colorStyle),
     flowDirection: pick(input.flowDirection, VALID_BRAID_DIRECTION, DEFAULT_SETTINGS.sideBraids.flowDirection),
-    customColors: input.customColors,
+    customColors: sanitizeCustomColors(input.customColors, DEFAULT_SETTINGS.sideBraids.customColors),
     customThickness: typeof input.customThickness === "number" ? input.customThickness : DEFAULT_SETTINGS.sideBraids.customThickness,
     customGap: typeof input.customGap === "number" ? input.customGap : DEFAULT_SETTINGS.sideBraids.customGap,
     customSensitivity: typeof input.customSensitivity === "number" ? input.customSensitivity : DEFAULT_SETTINGS.sideBraids.customSensitivity,
@@ -516,9 +529,7 @@ function sanitizeFocusMode(input = {}) {
 function sanitizeSettings(input = {}) {
   const source = migrateLegacySettings(input);
 
-  const customColors = Array.isArray(source.customColors) && source.customColors.length === 3
-    ? source.customColors
-    : DEFAULT_SETTINGS.customColors;
+  const customColors = sanitizeCustomColors(source.customColors, DEFAULT_SETTINGS.customColors);
 
   return {
     launchOnStartup: typeof source.launchOnStartup === "boolean" ? source.launchOnStartup : DEFAULT_SETTINGS.launchOnStartup,
