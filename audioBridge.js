@@ -19,6 +19,7 @@ function createAudioBridge(sendLevel, onStatusChange = () => {}) {
   let helperReady = false;
   let stdoutBuffer = "";
   const MAX_STDOUT_BUFFER_BYTES = 64 * 1024;
+  let isStopping = false;
 
   function updateStatus(nextStatus) {
     if (
@@ -61,6 +62,7 @@ function createAudioBridge(sendLevel, onStatusChange = () => {}) {
       return;
     }
 
+    isStopping = false;
     helperReady = false;
     stdoutBuffer = "";
 
@@ -127,6 +129,10 @@ function createAudioBridge(sendLevel, onStatusChange = () => {}) {
     helperProcess.on("exit", (code) => {
       helperProcess = null;
 
+      if (isStopping) {
+        return;
+      }
+
       if (retryCount < MAX_RETRIES) {
         retryCount++;
 
@@ -152,6 +158,7 @@ function createAudioBridge(sendLevel, onStatusChange = () => {}) {
   }
 
   function stop() {
+    isStopping = true;
     if (helperProcess) {
       helperProcess.kill();
       helperProcess = null;
