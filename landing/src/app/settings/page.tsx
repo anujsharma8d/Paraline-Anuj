@@ -1,50 +1,40 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "framer-motion";
-import { Palette, Sliders } from "lucide-react";
+import { Palette, Activity, Sliders } from "lucide-react";
 
 const initialGroups = [
   {
     title: "Theme & Visual Customization",
     icon: Palette,
     settings: [
-      { id: "color-palettes", name: "Dynamic Color Palettes", description: "Choose from curated presets (Rainbow, Sunset, Neon) or configure custom HSL gradients.", active: true },
-      { id: "glow-bloom", name: "Glow & Bloom Controls", description: "Fine-tune ambient glow strength (Soft, Balanced, Vivid) to match your desktop lighting.", active: true },
-      { id: "edge-mapping", name: "Screen Edge Mapping", description: "Position reactive bands along the bottom, top, sides, or span across multiple monitors.", active: true },
-      { id: "scale-density", name: "Scale & Density Tuning", description: "Adjust the thickness, spacing, and quantity of reactive lines, crystals, or particle nodes.", active: false },
+      { id: "color-palettes", name: "Dynamic Color Palettes", description: "Choose from curated preset themes or configure custom gradient stops for visualizers.", options: ["Rainbow", "Neon Sky", "Sunset", "Monochrome", "Custom Hex"] },
+      { id: "glow-bloom", name: "Glow & Bloom Controls", description: "Fine-tune ambient glow radii and bloom strength to match your setup lighting.", options: ["Soft Glow", "Balanced", "Vivid Bloom", "Custom Radii"] },
+      { id: "edge-mapping", name: "Screen Edge Mapping", description: "Map reactive animations to specific borders or span seamlessly across multiple monitors.", options: ["Bottom Edge", "Top Edge", "Sides", "All Borders", "Multi-Monitor"] },
+      { id: "scale-density", name: "Scale & Density Tuning", description: "Adjust line thickness, segment gaps, and reactive node density per theme.", options: ["Line Weight", "Braid Width", "Segment Gap", "Density"] },
     ]
   },
   {
-    title: "App Control & Performance",
+    title: "Advanced Audio & Reactivity",
+    icon: Activity,
+    settings: [
+      { id: "wasapi-capture", name: "WASAPI Loopback Capture", description: "Direct loopback capture of Windows system audio for high-fidelity visualization.", options: ["Stereo Mix", "Loopback Engine"] },
+      { id: "audio-smoothing", name: "Frequency Smoothing", description: "Soften frequency peaks using low-pass and average filters for fluid animations.", options: ["Misty", "Smooth", "Defined", "FFT Windowing"] },
+      { id: "reactivity-sensitivity", name: "Reactivity Sensitivity", description: "Fine-tune sensitivity scaling to respond perfectly to low, mid, or high audio frequencies.", options: ["Low", "Medium", "High", "Custom Gain"] },
+    ]
+  },
+  {
+    title: "System & Automation Settings",
     icon: Sliders,
     settings: [
-      { id: "focus-mode", name: "Focus Mode Integration", description: "Automatically dim opacity and reduce intensity when your system goes idle to avoid distractions.", active: false },
-      { id: "fps-limits", name: "Framerate Limiting", description: "Cap rendering at 60fps for battery saving, or unlock it to match high-refresh rate displays.", active: true },
-      { id: "theme-automation", name: "Automatic Profile Schedules", description: "Automatically switch themes between day and night modes based on system clock.", active: true },
-      { id: "audio-smoothing", name: "Frequency Smoothing", description: "Apply a low-pass filter to soften jagged frequency response spikes for smoother animations.", active: true },
+      { id: "focus-mode", name: "Focus Mode Integration", description: "Automatically dim visualizer opacity when your system goes idle to prevent distraction.", options: ["Idle Timeout", "Dim Opacity (0% - 90%)"] },
+      { id: "fps-limits", name: "Framerate Optimization", description: "Configure frame capping for low CPU consumption or unlock it for high-refresh monitors.", options: ["Battery (30 FPS)", "Balanced (60 FPS)", "Unlocked"] },
+      { id: "theme-automation", name: "Automatic Theme Schedules", description: "Auto-transition themes dynamically between day and night profiles using system clock time.", options: ["Day/Night Sync", "Hourly Automation"] },
     ]
   }
 ];
 
 export default function SettingsPage() {
-  const [groups, setGroups] = useState(initialGroups);
-
-  const toggleSetting = (groupIdx: number, settingIdx: number) => {
-    setGroups((prev) =>
-      prev.map((g, gi) =>
-        gi === groupIdx
-          ? {
-              ...g,
-              settings: g.settings.map((s, si) =>
-                si === settingIdx ? { ...s, active: !s.active } : s
-              ),
-            }
-          : g
-      )
-    );
-  };
-
   return (
     <main className="flex min-h-screen flex-col pt-32 pb-24 bg-[#060913] relative overflow-hidden z-0">
       {/* Immersive background glows */}
@@ -61,18 +51,18 @@ export default function SettingsPage() {
         >
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/[0.05] border border-cyan-500/10 mb-6">
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-400/80">Configuration</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-400/80">Configuration Showcase</span>
           </div>
           <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/50 mb-4 tracking-tighter drop-shadow-lg">
-            Client Settings Preview
+            Client Settings Showcase
           </h1>
           <p className="text-lg font-light tracking-wide text-white/50 max-w-2xl">
-            This is an interactive Live Preview of the settings panel available inside the Paraline desktop client. Explore the configuration preferences you can customize on your desktop.
+            A comprehensive preview of customization preferences, audio routing options, and advanced control parameters available inside the Paraline desktop client.
           </p>
         </motion.div>
 
         <div className="space-y-16">
-          {groups.map((group, groupIdx) => (
+          {initialGroups.map((group, groupIdx) => (
             <motion.div 
               key={group.title}
               initial={{ opacity: 0, y: 30 }}
@@ -92,35 +82,30 @@ export default function SettingsPage() {
 
               {/* Settings List (Right Side) */}
               <div className="flex-1 space-y-4">
-                {group.settings.map((setting, settingIdx) => (
+                {group.settings.map((setting) => (
                   <div 
                     key={setting.id} 
-                    className="group relative flex items-center justify-between rounded-[24px] border border-white/5 bg-white/[0.02] backdrop-blur-xl p-6 transition-all duration-500 hover:bg-white/[0.04] hover:border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05),_0_5px_15px_rgba(0,0,0,0.2)]"
+                    className="group relative flex flex-col md:flex-row md:items-center justify-between rounded-[24px] border border-white/5 bg-white/[0.02] backdrop-blur-xl p-6 gap-6 transition-all duration-500 hover:bg-white/[0.04] hover:border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05),_0_5px_15px_rgba(0,0,0,0.2)]"
                   >
                     {/* Hover Glow */}
                     <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none rounded-[24px]" />
                     
-                    <div className="pr-8 relative z-10">
+                    <div className="pr-4 relative z-10 flex-1">
                       <h3 className="text-[15px] font-semibold text-white/90 group-hover:text-white transition-colors">{setting.name}</h3>
                       <p className="mt-2 text-[13px] font-light text-white/50 leading-relaxed">{setting.description}</p>
                     </div>
                     
-                    {/* Premium Interactive Toggle */}
-                    <button 
-                      onClick={() => toggleSetting(groupIdx, settingIdx)}
-                      aria-pressed={setting.active}
-                      className={`relative z-10 inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border transition-all duration-500 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black/20 overflow-hidden active:scale-95 ${
-                        setting.active 
-                          ? 'bg-cyan-500/20 border-cyan-400/50 shadow-[0_0_20px_rgba(34,211,238,0.3)]' 
-                          : 'bg-white/[0.05] border-white/10 hover:bg-white/[0.08]'
-                      }`}
-                    >
-                      <span 
-                        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                          setting.active ? 'translate-x-[22px] shadow-[0_0_10px_rgba(255,255,255,0.8)]' : 'translate-x-1 opacity-40'
-                        }`} 
-                      />
-                    </button>
+                    {/* Visual Badges Showcase */}
+                    <div className="flex flex-wrap gap-1.5 shrink-0 max-w-[300px] relative z-10 justify-start md:justify-end">
+                      {setting.options.map((opt) => (
+                        <span 
+                          key={opt}
+                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-semibold tracking-wider bg-white/[0.03] border border-white/5 text-cyan-400/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.03)] uppercase transition-colors group-hover:border-cyan-500/20 group-hover:text-cyan-300"
+                        >
+                          {opt}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
