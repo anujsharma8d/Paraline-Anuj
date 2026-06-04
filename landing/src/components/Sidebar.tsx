@@ -68,14 +68,22 @@ export function Sidebar() {
     const handleHashChange = () => {
       setActiveHash(window.location.hash);
     };
+
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        useSidebarStore.getState().setIsOpen(false);
+      }
+    };
     
-    // Auto-close sidebar on mobile devices by default
-    if (window.innerWidth < 1024) {
-      useSidebarStore.getState().setIsOpen(false);
-    }
+    // Auto-close sidebar on mobile devices by default on mount
+    handleResize();
     
     window.addEventListener("hashchange", handleHashChange);
-    return () => window.removeEventListener("hashchange", handleHashChange);
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("hashchange", handleHashChange);
+      window.removeEventListener("resize", handleResize);
+    };
   }, [pathname]);
 
   const checkIsActive = (href: string) => {
