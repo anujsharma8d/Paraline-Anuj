@@ -8,10 +8,10 @@ export function AuroraDriftPreview({ active }: { active: boolean }) {
   // We'll create several layered SVG paths that drift horizontally
   // and scale vertically to simulate highly-reactive aurora curtains.
   const curtains = [
-    { color: "text-purple-500", opacity: active ? 0.8 : 0.3, duration: 8, delay: 0, scale: active ? [1, 1.5, 1] : [1, 1.1, 1] },
-    { color: "text-cyan-400", opacity: active ? 0.9 : 0.4, duration: 12, delay: -2, scale: active ? [1, 1.8, 1] : [1, 1.05, 1] },
-    { color: "text-emerald-400", opacity: active ? 0.6 : 0.2, duration: 10, delay: -5, scale: active ? [1, 1.3, 1] : [1, 1.15, 1] },
-    { color: "text-indigo-500", opacity: active ? 0.7 : 0.3, duration: 15, delay: -7, scale: active ? [1, 1.6, 1] : [1, 1.2, 1] }
+    { color: "text-purple-500", opacity: active ? 0.7 : 0.3, duration: 16, delay: 0, scale: active ? [1, 1.2, 1] : [1, 1.05, 1] },
+    { color: "text-cyan-400", opacity: active ? 0.8 : 0.4, duration: 24, delay: -2, scale: active ? [1, 1.3, 1] : [1, 1.03, 1] },
+    { color: "text-emerald-400", opacity: active ? 0.5 : 0.2, duration: 20, delay: -5, scale: active ? [1, 1.15, 1] : [1, 1.05, 1] },
+    { color: "text-indigo-500", opacity: active ? 0.6 : 0.3, duration: 30, delay: -7, scale: active ? [1, 1.25, 1] : [1, 1.1, 1] }
   ];
 
   return (

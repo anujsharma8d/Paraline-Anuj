@@ -217,8 +217,8 @@ export default function Home() {
                 </div>
                 
                 <div className="flex flex-col justify-center relative z-10">
-                  <h4 className="text-xl md:text-2xl font-bold text-white mb-1 tracking-tight drop-shadow-md">Zero Latency</h4>
-                  <p className="text-sm font-medium text-cyan-200/70 group-hover:text-cyan-200 transition-colors">Direct WASAPI engine</p>
+                  <h4 className="text-xl md:text-2xl font-bold text-white mb-1 tracking-tight drop-shadow-md">Ultra-Low Latency</h4>
+                  <p className="text-sm font-medium text-cyan-200/70 group-hover:text-cyan-200 transition-colors">High-speed WASAPI loopback</p>
                 </div>
               </div>
             </motion.div>
@@ -283,9 +283,9 @@ export default function Home() {
                   />
                   
                   <h4 className="text-4xl lg:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-[#ffcfb3] to-[#ff8c42] mb-1.5 relative z-10 tracking-tighter drop-shadow-lg">
-                    &lt; 0.1%
+                    &lt; 1%
                   </h4>
-                  <p className="text-xs font-extrabold text-[#ff8c42]/80 tracking-[0.2em] uppercase relative z-10 group-hover:text-[#ffaa66] transition-colors">CPU usage</p>
+                  <p className="text-xs font-extrabold text-[#ff8c42]/80 tracking-[0.2em] uppercase relative z-10 group-hover:text-[#ffaa66] transition-colors">CPU overhead</p>
                 </div>
               </motion.div>
 

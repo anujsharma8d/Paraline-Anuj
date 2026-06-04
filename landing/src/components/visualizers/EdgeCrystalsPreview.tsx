@@ -22,15 +22,15 @@ export function EdgeCrystalsPreview({ active }: { active: boolean }) {
               filter: "drop-shadow(0 0 8px rgba(168,85,247,0.8))"
             }}
             animate={{
-              scaleX: active ? [1, 2.5, 1] : [1, 1.2, 1],
-              opacity: active ? [0.4, 1, 0.4] : [0.1, 0.3, 0.1],
+              scaleX: active ? [1, 1.5, 1] : [1, 1.1, 1],
+              opacity: active ? [0.3, 0.6, 0.3] : [0.1, 0.2, 0.1],
               backgroundColor: active ? ["#ffffff", "#38bdf8", "#ffffff"] : "#475569"
             }}
             transition={{
-              duration: 0.2 + Math.random() * 0.4,
+              duration: 2.0 + Math.random() * 2.5,
               repeat: Infinity,
               ease: "easeInOut",
-              delay: Math.random() * 0.2
+              delay: Math.random() * 0.5
             }}
           />
         ))}
@@ -47,15 +47,15 @@ export function EdgeCrystalsPreview({ active }: { active: boolean }) {
               filter: "drop-shadow(0 0 8px rgba(56,189,248,0.8))"
             }}
             animate={{
-              scaleX: active ? [1, 2.5, 1] : [1, 1.2, 1],
-              opacity: active ? [0.4, 1, 0.4] : [0.1, 0.3, 0.1],
+              scaleX: active ? [1, 1.5, 1] : [1, 1.1, 1],
+              opacity: active ? [0.3, 0.6, 0.3] : [0.1, 0.2, 0.1],
               backgroundColor: active ? ["#ffffff", "#a855f7", "#ffffff"] : "#475569"
             }}
             transition={{
-              duration: 0.2 + Math.random() * 0.4,
+              duration: 2.0 + Math.random() * 2.5,
               repeat: Infinity,
               ease: "easeInOut",
-              delay: Math.random() * 0.2
+              delay: Math.random() * 0.5
             }}
           />
         ))}

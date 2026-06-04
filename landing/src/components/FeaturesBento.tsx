@@ -125,8 +125,8 @@ export function FeaturesBento() {
             <div className="relative z-10 mt-auto flex flex-col gap-4 sm:flex-row pt-12">
               {[
                 { title: "Platform: Windows", color: "text-cyan-400", desc: "Built as a transparent desktop overlay that seamlessly integrates with your screen edges." },
-                { title: "Built with Electron", color: "text-purple-400", desc: "Powered by Electron and a highly optimized C# engine, consuming <0.1% CPU." },
-                { title: "WASAPI Loopback", color: "text-emerald-400", desc: "Direct WASAPI audio loopback ensures zero latency between beat and visual response." }
+                { title: "Built with Electron", color: "text-purple-400", desc: "Powered by Electron and a highly optimized C# engine, designed for minimal resource footprint." },
+                { title: "WASAPI Loopback", color: "text-emerald-400", desc: "Direct WASAPI audio loopback ensures near-instantaneous response between beat and visual feedback." }
               ].map((card, idx) => (
                 <motion.div
                   key={idx}

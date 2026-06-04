@@ -13,20 +13,20 @@ export function PulseLinesPreview({ active }: { active: boolean }) {
         {/* Center intense core glow */}
         <motion.div
           animate={{
-            opacity: active ? [0.6, 1, 0.6] : [0.3, 0.6, 0.3],
-            width: active ? ["60px", "140px", "60px"] : ["40px", "80px", "40px"]
+            opacity: active ? [0.4, 0.7, 0.4] : [0.2, 0.4, 0.2],
+            width: active ? ["60px", "110px", "60px"] : ["40px", "60px", "40px"]
           }}
-          transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-300 to-transparent shadow-[0_0_15px_#22d3ee,0_0_25px_#22d3ee]"
+          transition={{ duration: 3.0, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-300 to-transparent shadow-[0_0_12px_#22d3ee,0_0_20px_#22d3ee]"
         />
 
         {/* Center elegant peak wave (smooth bell curve) */}
         <motion.div
           animate={{
-            height: active ? ["4px", "28px", "4px"] : ["4px", "8px", "4px"],
-            opacity: active ? [0.8, 1, 0.8] : [0.4, 0.7, 0.4]
+            height: active ? ["4px", "14px", "4px"] : ["4px", "8px", "4px"],
+            opacity: active ? [0.6, 0.8, 0.6] : [0.3, 0.5, 0.3]
           }}
-          transition={{ duration: 0.4, repeat: Infinity, ease: "easeOut" }}
+          transition={{ duration: 4.0, repeat: Infinity, ease: "easeInOut" }}
           className="absolute bottom-0 w-24 flex justify-center"
         >
           <svg viewBox="0 0 100 40" preserveAspectRatio="none" className="w-full h-full overflow-visible">
@@ -51,11 +51,11 @@ export function PulseLinesPreview({ active }: { active: boolean }) {
         {/* Left Primary Pulse */}
         <motion.div
           animate={{
-            left: active ? ["50%", "-10%"] : ["50%", "20%"],
-            width: active ? ["0px", "100px", "15px"] : ["0px", "40px", "5px"],
-            opacity: active ? [1, 1, 0] : [0.6, 0.6, 0]
+            left: active ? ["50%", "10%"] : ["50%", "30%"],
+            width: active ? ["0px", "80px", "10px"] : ["0px", "30px", "5px"],
+            opacity: active ? [0.7, 0.7, 0] : [0.4, 0.4, 0]
           }}
-          transition={{ duration: 1.2, repeat: Infinity, ease: "easeOut" }}
+          transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
           className="absolute bottom-0 h-[2px] bg-gradient-to-r from-white via-purple-400 to-transparent shadow-[0_0_12px_#a855f7]"
           style={{ transform: "translateX(-100%)", zIndex: 10 }}
         >
@@ -66,11 +66,11 @@ export function PulseLinesPreview({ active }: { active: boolean }) {
         {/* Left Secondary Pulse (Echo) */}
         <motion.div
           animate={{
-            left: active ? ["50%", "-10%"] : ["50%", "20%"],
-            width: active ? ["0px", "70px", "10px"] : ["0px", "30px", "5px"],
-            opacity: active ? [0.6, 0.8, 0] : [0.3, 0.5, 0]
+            left: active ? ["50%", "10%"] : ["50%", "30%"],
+            width: active ? ["0px", "50px", "8px"] : ["0px", "20px", "4px"],
+            opacity: active ? [0.4, 0.6, 0] : [0.2, 0.3, 0]
           }}
-          transition={{ duration: 1.2, repeat: Infinity, ease: "easeOut", delay: 0.15 }}
+          transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
           className="absolute bottom-0 h-[1px] bg-gradient-to-r from-cyan-200 via-cyan-400 to-transparent shadow-[0_0_8px_#22d3ee]"
           style={{ transform: "translateX(-100%)", zIndex: 9 }}
         />
@@ -78,11 +78,11 @@ export function PulseLinesPreview({ active }: { active: boolean }) {
         {/* Right Primary Pulse */}
         <motion.div
           animate={{
-            right: active ? ["50%", "-10%"] : ["50%", "20%"],
-            width: active ? ["0px", "100px", "15px"] : ["0px", "40px", "5px"],
-            opacity: active ? [1, 1, 0] : [0.6, 0.6, 0]
+            right: active ? ["50%", "10%"] : ["50%", "30%"],
+            width: active ? ["0px", "80px", "10px"] : ["0px", "30px", "5px"],
+            opacity: active ? [0.7, 0.7, 0] : [0.4, 0.4, 0]
           }}
-          transition={{ duration: 1.2, repeat: Infinity, ease: "easeOut" }}
+          transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
           className="absolute bottom-0 h-[2px] bg-gradient-to-l from-white via-purple-400 to-transparent shadow-[0_0_12px_#a855f7]"
           style={{ transform: "translateX(100%)", zIndex: 10 }}
         >
@@ -93,11 +93,11 @@ export function PulseLinesPreview({ active }: { active: boolean }) {
         {/* Right Secondary Pulse (Echo) */}
         <motion.div
           animate={{
-            right: active ? ["50%", "-10%"] : ["50%", "20%"],
-            width: active ? ["0px", "70px", "10px"] : ["0px", "30px", "5px"],
-            opacity: active ? [0.6, 0.8, 0] : [0.3, 0.5, 0]
+            right: active ? ["50%", "10%"] : ["50%", "30%"],
+            width: active ? ["0px", "50px", "8px"] : ["0px", "20px", "4px"],
+            opacity: active ? [0.4, 0.6, 0] : [0.2, 0.3, 0]
           }}
-          transition={{ duration: 1.2, repeat: Infinity, ease: "easeOut", delay: 0.15 }}
+          transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
           className="absolute bottom-0 h-[1px] bg-gradient-to-l from-cyan-200 via-cyan-400 to-transparent shadow-[0_0_8px_#22d3ee]"
           style={{ transform: "translateX(100%)", zIndex: 9 }}
         />

@@ -15,7 +15,7 @@ export function AmbientWavePreview({ active }: { active: boolean }) {
     let time = 0;
 
     const render = () => {
-      time += active ? 0.05 : 0.01;
+      time += active ? 0.012 : 0.004;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Draw two elegant cyan waves
