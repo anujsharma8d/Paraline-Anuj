@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, Plus, X } from "lucide-react";
 import { getThemesEndpoint } from "@/lib/paraline-api";
@@ -185,6 +185,26 @@ export function ThemeShowcase() {
   const [compareList, setCompareList] = useState<string[]>([]);
   const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
 
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    };
+  }, []);
+
+  const handleMouseEnter = (themeId: string) => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredTheme(themeId);
+    }, 150); // 150ms hover delay to prevent canvas trigger on fast scrolling
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    setHoveredTheme(null);
+  };
+
   const toggleCompare = (e: React.MouseEvent, themeId: string) => {
     e.stopPropagation();
     if (compareList.includes(themeId)) {
@@ -231,7 +251,7 @@ export function ThemeShowcase() {
               Premium Motion Aesthetics.
             </h2>
             <p className="text-muted/80 text-lg max-w-xl font-light">
-              Click any theme below to instantly apply it to your desktop and watch it react to your system audio in real-time.
+              Click any theme below to preview its unique motion physics, or instantly apply it to your running desktop client in real-time.
             </p>
           </div>
           <div className="flex items-center gap-3 rounded-full border border-cyan-500/20 bg-cyan-500/[0.05] px-5 py-3 shadow-[0_0_20px_rgba(34,211,238,0.1)]">
@@ -239,7 +259,7 @@ export function ThemeShowcase() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-500"></span>
             </div>
-            <span className="text-xs font-bold uppercase tracking-wider text-cyan-100">Zero Latency Active</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-cyan-100">Direct Sync Active</span>
           </div>
         </div>
 
@@ -252,8 +272,8 @@ export function ThemeShowcase() {
               viewport={{ once: true, margin: "-100px" }}
               whileHover={{ scale: 1.015 }}
               transition={{ duration: 0.5, delay: idx * 0.05, ease: [0.16, 1, 0.3, 1] }}
-              onMouseEnter={() => setHoveredTheme(theme.id)}
-              onMouseLeave={() => setHoveredTheme(null)}
+              onMouseEnter={() => handleMouseEnter(theme.id)}
+              onMouseLeave={handleMouseLeave}
               onClick={() => handleApply(theme.name)}
               className={`group relative flex flex-col sm:flex-row cursor-pointer overflow-hidden rounded-[28px] border border-white/5 bg-[#0a0d16]/80 backdrop-blur-md p-6 sm:p-8 transition-all duration-500 hover:border-cyan-500/30 hover:shadow-[0_20px_60px_-15px_rgba(34,211,238,0.2)] ${theme.className}`}
             >
