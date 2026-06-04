@@ -68,7 +68,7 @@ export function AuroraDriftPreview({ active }: { active: boolean }) {
         speed: 0.04,
         turbulenceFreq: 0.0035,
         turbulenceSpeed: 0.03,
-        maxHeight: 0.28 * 2.0, // Scaled down from 2.8 to keep height balanced and airy
+        maxHeight: 0.28 * 2.0, // Balanced visual height
         opacity: 0.08,
         colorOffset: 0.0,
         widthScale: 1.0,
@@ -179,8 +179,8 @@ export function AuroraDriftPreview({ active }: { active: boolean }) {
       const width = rect.width;
       const height = rect.height;
 
-      // Increment elapsed time relative to deltaTime
-      time += deltaTime * 0.85;
+      // Increment elapsed time (slightly accelerated for web preview engagement)
+      time += deltaTime * 1.5;
 
       // Simulated audio LERP with attack/release envelopes (increased default level for visibility)
       const targetLevel = active 
@@ -212,8 +212,9 @@ export function AuroraDriftPreview({ active }: { active: boolean }) {
       const activeTurbulence = 0.35 + emotionFactor * 1.10;
       const activeGlow = 0.55 + emotionFactor * 0.25;
 
-      globalDriftPhase += deltaTime * 0.009 * activeSpeed;
-      energyFlowOffset += deltaTime * (0.28 + emotionFactor * 0.90) * activeSpeed;
+      // Accelerated drift phases for dynamic engagement on web preview
+      globalDriftPhase += deltaTime * 0.05 * activeSpeed;
+      energyFlowOffset += deltaTime * (0.8 + emotionFactor * 1.6) * activeSpeed;
 
       const shimmerNoise = Math.sin(time * 50.0) * shimmerLevelState * 0.12;
 
@@ -253,6 +254,9 @@ export function AuroraDriftPreview({ active }: { active: boolean }) {
       ctx.fillRect(0, height - horizonHeight, width, horizonHeight);
       ctx.restore();
 
+      // Dynamic frequency multiplier to keep wave visual density constant across smaller container widths
+      const freqMultiplier = 1000 / Math.max(100, width);
+
       // Render Aurora layers from background to foreground
       for (let i = 0; i < LAYERS.length; i++) {
         const layer = LAYERS[i];
@@ -268,9 +272,9 @@ export function AuroraDriftPreview({ active }: { active: boolean }) {
         for (let x = 0; x <= ribbonWidth; x += step) {
           const nx = x / ribbonWidth;
 
-          const wave1 = Math.sin(x * layer.frequency + globalDriftPhase * layer.speed * 8.0 + layerPhaseOffset);
-          const wave2 = Math.sin(x * layer.frequency * 2.3 + globalDriftPhase * layer.speed * 4.5 + layerPhaseOffset * 0.7) * 0.45;
-          const wave3 = Math.sin(x * 0.012 + time * 0.06 + layerPhaseOffset * 1.3) * 0.10; // match desktop physics wave3
+          const wave1 = Math.sin(x * layer.frequency * freqMultiplier + globalDriftPhase * layer.speed * 8.0 + layerPhaseOffset);
+          const wave2 = Math.sin(x * layer.frequency * freqMultiplier * 2.3 + globalDriftPhase * layer.speed * 4.5 + layerPhaseOffset * 0.7) * 0.45;
+          const wave3 = Math.sin(x * 0.012 * freqMultiplier + time * 0.06 + layerPhaseOffset * 1.3) * 0.10; // match desktop physics wave3
           
           const combinedWave = wave1 + wave2 + wave3;
           const maxRise = height * layer.maxHeight * (active ? 1.0 : 0.85); // Balanced visual height
@@ -346,8 +350,8 @@ export function AuroraDriftPreview({ active }: { active: boolean }) {
           const approxRise = getCrestHeight(xBase);
           
           // 2. Compute sway, fold, etc. at the top of the curtain (t = 1) using approxRise to find x_top
-          const sway_top = Math.sin(xBase * 0.0028 + approxRise * 0.0009 + time * 0.28 * layer.speed + layerPhaseOffset) * 20;
-          const foldPhase_top = xBase * 0.015 - approxRise * (0.007 + i * 0.0006) + energyFlowOffset * (0.75 + i * 0.15) + layerPhaseOffset;
+          const sway_top = Math.sin(xBase * 0.0028 * freqMultiplier + approxRise * 0.0009 + time * 0.28 * layer.speed + layerPhaseOffset) * 20;
+          const foldPhase_top = xBase * 0.015 * freqMultiplier - approxRise * (0.007 + i * 0.0006) + energyFlowOffset * (0.75 + i * 0.15) + layerPhaseOffset;
           const foldAmp_top = (5 + expressiveness * 24 * activeTurbulence) * 0.65; // t = 1 => 1.0 - 0.35 = 0.65
           const fold_top = Math.sin(foldPhase_top) * foldAmp_top;
 
@@ -385,9 +389,9 @@ export function AuroraDriftPreview({ active }: { active: boolean }) {
             const d = t * filamentRise;
             const y = baseY - d;
 
-            // Sway & folding formulas matching desktop physics exactly (fluid, active physics)
-            const sway = Math.sin(xBase * 0.0028 + d * 0.0009 + time * 0.28 * layer.speed + layerPhaseOffset) * 20;
-            const foldPhase = xBase * 0.015 - d * (0.007 + i * 0.0006) + energyFlowOffset * (0.75 + i * 0.15) + layerPhaseOffset;
+            // Sway & folding formulas matching desktop physics exactly (fluid, active physics, scaled spatially)
+            const sway = Math.sin(xBase * 0.0028 * freqMultiplier + d * 0.0009 + time * 0.28 * layer.speed + layerPhaseOffset) * 20;
+            const foldPhase = xBase * 0.015 * freqMultiplier - d * (0.007 + i * 0.0006) + energyFlowOffset * (0.75 + i * 0.15) + layerPhaseOffset;
             const foldAmp = (5 + expressiveness * 24 * activeTurbulence) * (1.0 - t * 0.35);
             const fold = Math.sin(foldPhase) * foldAmp;
 
