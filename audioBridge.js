@@ -3,14 +3,22 @@ const { spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
-function createAudioBridge(sendLevel, onStatusChange = () => { }) {
+function createAudioBridge(sendLevel, onStatusChange = () => {}) {
   let helperProcess = null;
+
   let helperStatus = {
     mode: "simulated",
     reason: "Helper not started yet."
   };
 
-  let lastStatusUpdate = 0; // FIX: used for throttling stderr updates
+  let lastStatusUpdate = 0;
+
+  let retryCount = 0;
+  const MAX_RETRIES = 3;
+
+  let helperReady = false;
+  let stdoutBuffer = "";
+  const MAX_STDOUT_BUFFER_BYTES = 64 * 1024;
 
   function updateStatus(nextStatus) {
     if (
@@ -27,6 +35,7 @@ function createAudioBridge(sendLevel, onStatusChange = () => { }) {
 
   function findHelperBinary() {
     const appPath = app.getAppPath();
+
     const candidates = [
       path.join(process.resourcesPath, "audio-helper", "Paraline.AudioBridge.exe"),
       path.join(appPath, "build", "audio-helper", "Paraline.AudioBridge.exe"),
@@ -35,7 +44,7 @@ function createAudioBridge(sendLevel, onStatusChange = () => { }) {
       path.join(appPath, "audio-helper", "bin", "Release", "net8.0-windows", "Paraline.AudioBridge.exe")
     ];
 
-    return candidates.find((candidatePath) => fs.existsSync(candidatePath)) || null;
+    return candidates.find((p) => fs.existsSync(p)) || null;
   }
 
   function start() {
@@ -44,29 +53,30 @@ function createAudioBridge(sendLevel, onStatusChange = () => { }) {
     if (!helperBinary) {
       updateStatus({
         mode: "simulated",
-        reason: [
-          "Audio capture helper not found.",
-          "\n",
-          "Troubleshooting:",
-          "\n- The required C# audio helper binary is missing.",
-          "\n- Please build it with: dotnet build .\\audio-helper\\Paraline.AudioBridge.csproj",
-          "\n- Or run: npm run build:helper",
-          "\n- See DEVELOPMENT.md for setup instructions."
-        ].join("")
+        reason:
+          "Audio capture helper not found.\n" +
+          "- Build C# helper first\n" +
+          "- Or run npm run build:helper"
       });
       return;
     }
+
+    helperReady = false;
+    stdoutBuffer = "";
 
     helperProcess = spawn(helperBinary, [], {
       windowsHide: true,
       stdio: ["ignore", "pipe", "pipe"]
     });
 
-    let helperReady = false;
-    let stdoutBuffer = "";
-
     helperProcess.stdout.on("data", (chunk) => {
       stdoutBuffer += chunk.toString();
+
+      if (stdoutBuffer.length > MAX_STDOUT_BUFFER_BYTES) {
+        stdoutBuffer = "";
+        console.warn("stdout buffer cleared due to overflow");
+        return;
+      }
 
       const lines = stdoutBuffer.split(/\r?\n/);
       stdoutBuffer = lines.pop() || "";
@@ -79,6 +89,7 @@ function createAudioBridge(sendLevel, onStatusChange = () => { }) {
 
           if (!helperReady) {
             helperReady = true;
+            retryCount = 0;
 
             updateStatus({
               mode: "helper",
@@ -89,57 +100,53 @@ function createAudioBridge(sendLevel, onStatusChange = () => { }) {
           if (message.type === "level" && typeof message.value === "number") {
             sendLevel(message.value);
           }
-        } catch (_error) {
-          console.warn("Invalid helper message received.");
-          continue;
+        } catch {
+          console.warn("Invalid helper message received");
         }
       }
     });
 
     helperProcess.stderr.on("data", (chunk) => {
       const errorMessage = chunk.toString().trim();
-
-      // FIX: always log raw stderr for debugging
       console.error(errorMessage);
 
       const now = Date.now();
 
-      // FIX: throttle UI updates to avoid flood (max 1 per 1000ms)
-      if (now - lastStatusUpdate < 1000) {
-        return;
-      }
+      if (now - lastStatusUpdate < 1000) return;
 
-      const changed = updateStatus({
+      lastStatusUpdate = now;
+
+      updateStatus({
         mode: "helper-error",
-        reason: [
-          "Audio helper error: ",
-          errorMessage || "Helper reported an error.",
-          "\n",
-          "Troubleshooting:",
-          "\n- Check if your audio device is in use by another app.",
-          "\n- Try restarting Paraline or your computer.",
-          "\n- If this continues, rebuild the helper binary."
-        ].join("")
+        reason:
+          "Audio helper error: " +
+          (errorMessage || "unknown error")
       });
-
-      if (changed) {
-        lastStatusUpdate = now;
-      }
     });
 
     helperProcess.on("exit", (code) => {
       helperProcess = null;
 
+      if (retryCount < MAX_RETRIES) {
+        retryCount++;
+
+        updateStatus({
+          mode: "reconnecting",
+          reason: `Helper crashed. Restarting ${retryCount}/${MAX_RETRIES}`
+        });
+
+        setTimeout(() => {
+          start();
+        }, 2000);
+
+        return;
+      }
+
       updateStatus({
         mode: "simulated",
-        reason: [
-          `Audio helper stopped (exit code ${code}).`,
-          "\n",
-          "Troubleshooting:",
-          "\n- The audio capture process exited unexpectedly.",
-          "\n- Try restarting Paraline.",
-          "\n- If the problem persists, rebuild the helper binary."
-        ].join("")
+        reason:
+          `Audio helper stopped permanently (exit ${code}).\n` +
+          "Max retry limit reached."
       });
     });
   }
