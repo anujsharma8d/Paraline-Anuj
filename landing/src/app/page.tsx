@@ -180,7 +180,7 @@ export default function Home() {
               transition={{ duration: 0.8, delay: 0.6 }}
               className="flex items-center gap-6"
             >
-              <DownloadButton className="h-16 px-12 bg-gradient-to-r from-white/5 to-white/10 border border-white/20 hover:from-cyan-500/20 hover:to-purple-500/20 hover:border-cyan-400/50 backdrop-blur-xl rounded-full shadow-[0_10px_30px_-10px_rgba(34,211,238,0.2)] hover:shadow-[0_15px_50px_-5px_rgba(34,211,238,0.5)] transition-all duration-500 group overflow-hidden relative">
+              <DownloadButton location="hero" className="h-16 px-12 bg-gradient-to-r from-white/5 to-white/10 border border-white/20 hover:from-cyan-500/20 hover:to-purple-500/20 hover:border-cyan-400/50 backdrop-blur-xl rounded-full shadow-[0_10px_30px_-10px_rgba(34,211,238,0.2)] hover:shadow-[0_15px_50px_-5px_rgba(34,211,238,0.5)] transition-all duration-500 group overflow-hidden relative">
                 {/* Button Inner Glow */}
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
                 <span className="relative z-10 text-sm font-extrabold tracking-[0.2em] text-white group-hover:text-cyan-300 transition-colors uppercase">
@@ -404,7 +404,7 @@ export default function Home() {
               transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
               className="relative z-10 flex flex-col items-center md:items-end gap-4 w-full md:w-auto"
             >
-              <DownloadButton className="w-full md:w-64 px-10 py-5 rounded-full bg-white text-black hover:bg-white/90 shadow-[0_0_40px_rgba(255,255,255,0.15)] font-semibold tracking-widest text-xs uppercase transition-all duration-300 hover:scale-105" variant="primary">
+              <DownloadButton location="cta" className="w-full md:w-64 px-10 py-5 rounded-full bg-white text-black hover:bg-white/90 shadow-[0_0_40px_rgba(255,255,255,0.15)] font-semibold tracking-widest text-xs uppercase transition-all duration-300 hover:scale-105" variant="primary">
                 Download Installer
               </DownloadButton>
               <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className="w-full md:w-64 rounded-full border border-white/10 bg-white/5 px-10 py-5 text-center text-xs font-semibold text-white uppercase tracking-widest transition-all hover:border-white/30 hover:bg-white/10 backdrop-blur-md">

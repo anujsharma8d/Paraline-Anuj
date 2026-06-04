@@ -10,14 +10,21 @@ interface DownloadButtonProps {
   variant?: "primary" | "secondary";
   children?: React.ReactNode;
   style?: React.CSSProperties;
+  location?: string;
 }
 
-export function DownloadButton({ className, variant = "primary", children, style }: DownloadButtonProps) {
+export function DownloadButton({ className, variant = "primary", children, style, location = "general" }: DownloadButtonProps) {
   const [status, setStatus] = useState<"idle" | "connecting" | "downloading" | "done">("idle");
 
   const handleDownload = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (status !== "idle") return;
+
+    if (typeof window !== "undefined" && typeof (window as any).gtag === "function") {
+      (window as any).gtag("event", "download_click", {
+        location: location
+      });
+    }
     
     setStatus("connecting");
     

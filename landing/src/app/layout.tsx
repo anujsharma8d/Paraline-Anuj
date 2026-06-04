@@ -3,6 +3,8 @@ import { Geist, JetBrains_Mono } from "next/font/google";
 import { Sidebar } from "@/components/Sidebar";
 import { Footer } from "@/components/Footer";
 import { MainWrapper } from "@/components/MainWrapper";
+import { Analytics } from "@vercel/analytics/react";
+import Script from "next/script";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -19,6 +21,8 @@ export const metadata: Metadata = {
   title: "Paraline - Pro Edge Visualizer",
   description: "Paraline is an audio-reactive edge visualizer for Windows desktops, featuring cinematic themes and real-time audio capture.",
 };
+
+const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
 export default function RootLayout({
   children,
@@ -40,6 +44,24 @@ export default function RootLayout({
           {children}
           <Footer />
         </MainWrapper>
+
+        {gaId && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${gaId}');
+              `}
+            </Script>
+          </>
+        )}
+        <Analytics />
       </body>
     </html>
   );
