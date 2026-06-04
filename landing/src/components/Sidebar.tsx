@@ -6,14 +6,18 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { 
   Home, 
-  Image, 
+  Image as ImageIcon, 
   Settings, 
   FileText, 
   HelpCircle, 
   Download, 
-  HeadphonesIcon 
+  HeadphonesIcon,
+  ChevronLeft,
+  ChevronRight,
+  Menu
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSidebarStore } from "@/store/sidebar";
 import { GITHUB_URL } from "@/lib/paraline-api";
 import { Logo } from "./Logo";
 
@@ -37,7 +41,7 @@ const Github = ({ className, strokeWidth = 2 }: { className?: string; strokeWidt
 
 const menuItems = [
   { id: "home", label: "Home", icon: Home, href: "/" },
-  { id: "themes", label: "Theme Gallery", icon: Image, href: "/#themes" },
+  { id: "themes", label: "Theme Gallery", icon: ImageIcon, href: "/#themes" },
   { id: "settings", label: "Configuration", icon: Settings, href: "/settings" },
   { id: "download", label: "Get Paraline", icon: Download, href: "/#download" }
 ];
@@ -53,7 +57,8 @@ const supportItems = [
   { name: "Github", href: GITHUB_URL, icon: Github, external: true },
 ];
 
-export function Sidebar({ isOpen = true }: { isOpen?: boolean }) {
+export function Sidebar() {
+  const { isOpen, toggle } = useSidebarStore();
   const pathname = usePathname();
   const [activeHash, setActiveHash] = useState("");
 
@@ -63,6 +68,11 @@ export function Sidebar({ isOpen = true }: { isOpen?: boolean }) {
     const handleHashChange = () => {
       setActiveHash(window.location.hash);
     };
+    
+    // Auto-close sidebar on mobile devices by default
+    if (window.innerWidth < 1024) {
+      useSidebarStore.getState().setIsOpen(false);
+    }
     
     window.addEventListener("hashchange", handleHashChange);
     return () => window.removeEventListener("hashchange", handleHashChange);
@@ -80,13 +90,39 @@ export function Sidebar({ isOpen = true }: { isOpen?: boolean }) {
   };
 
   return (
-    <aside 
+    <>
+      {/* Mobile Overlay */}
+      <div 
+        className={cn(
+          "fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 lg:hidden",
+          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
+        onClick={() => { if (isOpen) toggle(); }}
+      />
+
+      <aside 
       className={cn(
-        "fixed left-0 top-0 z-50 flex h-full w-64 flex-col justify-between border-r border-white/5 bg-[#010206]/80 backdrop-blur-2xl transition-transform duration-300 ease-in-out lg:translate-x-0 shadow-[4px_0_24px_rgba(0,0,0,0.5)]",
+        "fixed left-0 top-0 z-50 flex h-full w-64 flex-col justify-between border-r border-white/5 bg-[#010206]/80 backdrop-blur-2xl transition-transform duration-300 ease-in-out shadow-[4px_0_24px_rgba(0,0,0,0.5)]",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}
     >
-      <div>
+      <button
+        onClick={toggle}
+        className={cn(
+          "absolute top-0 -right-10 z-50 flex h-10 w-10 items-center justify-center rounded-br-xl border border-t-0 border-l-0 backdrop-blur-2xl transition-all duration-500 group shadow-[4px_0_24px_rgba(0,0,0,0.5)]",
+          isOpen 
+            ? "bg-white/[0.02] border-white/5 text-muted hover:text-white hover:bg-white/[0.08]" 
+            : "bg-[#010206]/90 border-cyan-500/30 text-cyan-400 hover:bg-[#010206] hover:border-cyan-400/60 hover:text-cyan-300 shadow-[0_0_20px_rgba(34,211,238,0.2)]"
+        )}
+        aria-label="Toggle Sidebar"
+      >
+        {isOpen ? (
+          <ChevronLeft className="h-5 w-5 transition-transform duration-300 group-hover:-translate-x-0.5" />
+        ) : (
+          <Menu className="h-5 w-5 transition-transform duration-300 group-hover:scale-110 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" />
+        )}
+      </button>
+      <div className="flex flex-col flex-1 min-h-0">
         {/* Logo Section */}
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
@@ -97,7 +133,7 @@ export function Sidebar({ isOpen = true }: { isOpen?: boolean }) {
           <Logo />
         </motion.div>
 
-        <div className="flex-1 overflow-y-auto px-4 py-2 scrollbar-hide">
+        <div className="flex-1 overflow-y-auto px-4 py-2">
           {/* Menu Section */}
           <div className="mb-8 mt-6">
             <motion.div 
@@ -129,6 +165,9 @@ export function Sidebar({ isOpen = true }: { isOpen?: boolean }) {
                           setActiveHash('#' + item.href.split('#')[1]);
                         } else {
                           setActiveHash('');
+                        }
+                        if (window.innerWidth < 1024 && isOpen) {
+                          toggle();
                         }
                       }}
                       className={cn(
@@ -187,6 +226,11 @@ export function Sidebar({ isOpen = true }: { isOpen?: boolean }) {
                   >
                     <Link
                       href={item.href}
+                      onClick={() => {
+                        if (window.innerWidth < 1024 && isOpen) {
+                          toggle();
+                        }
+                      }}
                       className={cn(
                         "group relative flex items-center gap-4 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300 overflow-hidden",
                         isActive 
@@ -243,6 +287,11 @@ export function Sidebar({ isOpen = true }: { isOpen?: boolean }) {
                     href={item.href}
                     target={item.external ? "_blank" : undefined}
                     rel={item.external ? "noopener noreferrer" : undefined}
+                    onClick={() => {
+                      if (window.innerWidth < 1024 && isOpen) {
+                        toggle();
+                      }
+                    }}
                     className="group flex items-center gap-4 rounded-xl px-4 py-3 text-sm font-medium text-muted transition-all duration-300 hover:bg-white/[0.04] hover:text-white hover:translate-x-1 border-l-2 border-transparent"
                   >
                     <item.icon className="h-[18px] w-[18px] text-muted group-hover:text-emerald-300 transition-colors" strokeWidth={1.5} />
@@ -268,6 +317,7 @@ export function Sidebar({ isOpen = true }: { isOpen?: boolean }) {
           </div>
         </div>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

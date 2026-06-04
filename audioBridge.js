@@ -82,12 +82,11 @@ function createAudioBridge(sendLevel, onStatusChange = () => {}) {
             sendLevel(message.value);
           }
         } catch (_error) {
-  console.warn("Invalid helper message received.");
-  continue;
-}
+          console.warn("Invalid helper message received.");
+          continue;
         }
       }
-    };
+    });
 
     helperProcess.stderr.on("data", (chunk) => {
       updateStatus({
