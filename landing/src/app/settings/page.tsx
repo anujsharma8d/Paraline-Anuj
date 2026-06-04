@@ -2,23 +2,27 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Monitor, Volume2 } from "lucide-react";
+import { Palette, Sliders } from "lucide-react";
 
 const initialGroups = [
   {
-    title: "Display & Performance",
-    icon: Monitor,
+    title: "Theme & Visual Customization",
+    icon: Palette,
     settings: [
-      { id: "focus-mode", name: "Focus Mode Integration", description: "Reduce visualizer opacity and intensity when your system goes idle.", active: false },
-      { id: "launch-startup", name: "Start with Windows", description: "Automatically launch Paraline when your computer boots up.", active: true },
+      { id: "color-palettes", name: "Dynamic Color Palettes", description: "Choose from curated presets (Rainbow, Sunset, Neon) or configure custom HSL gradients.", active: true },
+      { id: "glow-bloom", name: "Glow & Bloom Controls", description: "Fine-tune ambient glow strength (Soft, Balanced, Vivid) to match your desktop lighting.", active: true },
+      { id: "edge-mapping", name: "Screen Edge Mapping", description: "Position reactive bands along the bottom, top, sides, or span across multiple monitors.", active: true },
+      { id: "scale-density", name: "Scale & Density Tuning", description: "Adjust the thickness, spacing, and quantity of reactive lines, crystals, or particle nodes.", active: false },
     ]
   },
   {
-    title: "Theme & Capture Behavior",
-    icon: Volume2,
+    title: "App Control & Performance",
+    icon: Sliders,
     settings: [
-      { id: "theme-automation", name: "Theme Automation", description: "Automatically transition themes between day and night modes.", active: true },
-      { id: "smoothing", name: "Frequency Smoothing", description: "Apply an audio low-pass filter to soften jagged frequency response spikes.", active: true },
+      { id: "focus-mode", name: "Focus Mode Integration", description: "Automatically dim opacity and reduce intensity when your system goes idle to avoid distractions.", active: false },
+      { id: "fps-limits", name: "Framerate Limiting", description: "Cap rendering at 60fps for battery saving, or unlock it to match high-refresh rate displays.", active: true },
+      { id: "theme-automation", name: "Automatic Profile Schedules", description: "Automatically switch themes between day and night modes based on system clock.", active: true },
+      { id: "audio-smoothing", name: "Frequency Smoothing", description: "Apply a low-pass filter to soften jagged frequency response spikes for smoother animations.", active: true },
     ]
   }
 ];
