@@ -9,6 +9,7 @@ import { ThemeShowcase } from "@/components/ThemeShowcase";
 import { FeaturesBento } from "@/components/FeaturesBento";
 import { AmbientWavePreview } from "@/components/visualizers/AmbientWavePreview";
 import { SideBarsPreview } from "@/components/visualizers/SideBarsPreview";
+import { AuroraDriftPreview } from "@/components/visualizers/AuroraDriftPreview";
 import { EdgeCrystalsPreview } from "@/components/visualizers/EdgeCrystalsPreview";
 import { FlowBorderPreview } from "@/components/visualizers/FlowBorderPreview";
 import { Logo } from "@/components/Logo";
@@ -99,9 +100,9 @@ export default function Home() {
                 style={{ transform: "translateZ(130px)" }}
               >
                  <div className="text-[10px] text-cyan-400 tracking-widest uppercase font-bold mb-1">Active Theme</div>
-                 <div className="text-sm font-semibold text-white mb-3">Edge Crystals</div>
+                 <div className="text-sm font-semibold text-white mb-3">Aurora Drift</div>
                  <div className="relative w-full flex-1 bg-[#02040a] rounded-lg overflow-hidden border border-white/5">
-                   <EdgeCrystalsPreview active={true} />
+                   <AuroraDriftPreview active={true} />
                  </div>
               </motion.div>
            </div>
