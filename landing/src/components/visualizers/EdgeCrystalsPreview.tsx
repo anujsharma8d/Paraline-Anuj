@@ -122,7 +122,7 @@ export function EdgeCrystalsPreview({ active }: { active: boolean }) {
 
         smoothedLevel += (target - smoothedLevel) * (1 - Math.exp(-8.0 * deltaTime));
       } else {
-        const idleTarget = 0.05 + 0.02 * Math.sin(time * 0.6);
+        const idleTarget = 0.15 + 0.05 * Math.sin(time * 0.8);
         smoothedLevel += (idleTarget - smoothedLevel) * (1 - Math.exp(-2.5 * deltaTime));
         beatSpike = 0;
         beatTimer = 0;
@@ -221,8 +221,8 @@ function drawCrystalStroke(ctx: CanvasRenderingContext2D, options: CrystalStroke
 
   const flutterX = Math.sin(phase * 1.6) * profile.flutterAmplitude * stroke.amplitudeSeed * (0.35 + energy * 0.9);
   const flutterY = Math.sin(phase * 1.1 + stroke.phase * 0.8) * profile.verticalFlutter * stroke.amplitudeSeed * (0.28 + energy * 0.55);
-  const length = (profile.baseLength + energy * profile.audioLengthBoost) * stroke.lengthSeed * (0.62 + activation * 0.55);
-  const opacity = Math.max(0, Math.min(1, (0.18 + activation * 0.64 + energy * 0.16) * stroke.opacitySeed));
+  const length = (profile.baseLength + energy * profile.audioLengthBoost) * stroke.lengthSeed * (0.75 + activation * 0.65);
+  const opacity = Math.max(0.32, Math.min(1.0, (0.35 + activation * 0.55 + energy * 0.20) * stroke.opacitySeed));
   
   const y = stroke.yBase + flutterY;
   const edgeX = stroke.side === "left" ? 2.5 : width - 2.5;
@@ -245,7 +245,7 @@ function drawCrystalStroke(ctx: CanvasRenderingContext2D, options: CrystalStroke
 
   // 1. Draw outer wide glow stroke
   ctx.lineWidth = coreWidth * 6.0;
-  ctx.globalAlpha = opacity * 0.1;
+  ctx.globalAlpha = opacity * 0.35;
   ctx.beginPath();
   ctx.moveTo(startX, startY);
   ctx.lineTo(endX, endY);
@@ -253,7 +253,7 @@ function drawCrystalStroke(ctx: CanvasRenderingContext2D, options: CrystalStroke
 
   // 2. Draw inner medium glow stroke
   ctx.lineWidth = coreWidth * 3.0;
-  ctx.globalAlpha = opacity * 0.28;
+  ctx.globalAlpha = opacity * 0.65;
   ctx.beginPath();
   ctx.moveTo(startX, startY);
   ctx.lineTo(endX, endY);
