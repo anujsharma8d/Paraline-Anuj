@@ -60,10 +60,10 @@ export default function SettingsPage() {
             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-400/80">Configuration</span>
           </div>
           <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/50 mb-4 tracking-tighter drop-shadow-lg">
-            App Settings
+            Client Settings Preview
           </h1>
           <p className="text-lg font-light tracking-wide text-white/50 max-w-2xl">
-            Preview of the desktop client configuration and hardware preferences.
+            This is an interactive Live Preview of the settings panel available inside the Paraline desktop client. Explore the configuration preferences you can customize on your desktop.
           </p>
         </motion.div>
 
