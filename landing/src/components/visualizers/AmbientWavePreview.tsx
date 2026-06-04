@@ -12,59 +12,116 @@ export function AmbientWavePreview({ active }: { active: boolean }) {
     if (!ctx) return;
 
     let animationFrameId: number;
+    let lastTime = performance.now();
     let time = 0;
-    let smoothedLevel = 0;
+    
+    // Physics variables for smooth, framerate-independent behavior
+    let currentLevel = 0.06;
+    
+    // Procedural beat generation
+    let beatTimer = 0;
+    let nextBeatTime = 1.0;
+    let beatSpike = 0;
 
-    const render = () => {
-      if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
-        canvas.width = canvas.clientWidth;
-        canvas.height = canvas.clientHeight;
+    const render = (now: number) => {
+      const deltaTime = Math.min(0.1, (now - lastTime) / 1000);
+      lastTime = now;
+
+      // Handle resize / DPI scaling dynamically
+      const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+      const rect = canvas.getBoundingClientRect();
+      const targetWidth = Math.floor(rect.width * dpr);
+      const targetHeight = Math.floor(rect.height * dpr);
+
+      if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        ctx.scale(dpr, dpr);
       }
 
-      const width = canvas.width;
-      const height = canvas.height;
+      const width = rect.width;
+      const height = rect.height;
 
-      // Update simulated audio reactivity
+      // Increment time relative to deltaTime
+      time += deltaTime * (active ? 0.8 : 0.4);
+
+      // Procedural audio reactivity simulation
       if (active) {
-        const target = 0.25 + 0.3 * Math.sin(time * 3) + 0.15 * Math.sin(time * 7.5);
-        smoothedLevel += (target - smoothedLevel) * 0.1;
+        beatTimer += deltaTime;
+        if (beatTimer > nextBeatTime) {
+          beatSpike = 0.35 + Math.random() * 0.4; // trigger a simulated beat
+          nextBeatTime = 0.8 + Math.random() * 1.4; // randomized interval for natural rhythm
+          beatTimer = 0;
+        }
+        
+        // Smooth exponential decay for the beat spike
+        beatSpike += (0 - beatSpike) * (1 - Math.exp(-3.2 * deltaTime));
+        
+        // Slow ambient breathing
+        const baseAmbient = 0.12 + 0.08 * Math.sin(time * 0.8) + 0.03 * Math.sin(time * 2.1);
+        
+        // Subtle micro-jitter for realistic live audio feel
+        const microJitter = 0.015 * Math.sin(time * 16.0) * Math.cos(time * 9.0);
+        
+        const target = baseAmbient + beatSpike + microJitter;
+        
+        // Frame-rate independent LERP attack & decay
+        currentLevel += (target - currentLevel) * (1 - Math.exp(-6.8 * deltaTime));
       } else {
-        smoothedLevel += (0 - smoothedLevel) * 0.05;
+        // Gentle, slow idle breathing when not hovered
+        const idleTarget = 0.05 + 0.02 * Math.sin(time * 0.6);
+        currentLevel += (idleTarget - currentLevel) * (1 - Math.exp(-2.5 * deltaTime));
+        beatSpike = 0;
+        beatTimer = 0;
       }
-
-      time += active ? 0.015 : 0.005;
 
       ctx.clearRect(0, 0, width, height);
 
-      // Reset canvas composite and shadow settings
-      ctx.globalCompositeOperation = "source-over";
-      ctx.shadowBlur = 0;
-      ctx.shadowColor = "transparent";
+      // Draw faint, premium dark backing fill
+      ctx.fillStyle = "rgba(6, 9, 19, 0.92)";
+      ctx.fillRect(0, 0, width, height);
 
-      const glowScale = 1.18;
-      const topBase = height * 0.25 + smoothedLevel * 10;
-      const bottomBase = height * 0.75 - smoothedLevel * 25;
-      const primaryAmplitude = 6 + smoothedLevel * 18;
-      const secondaryAmplitude = 2 + smoothedLevel * 8;
+      // Create top-to-bottom edge ambient glow haze
+      const edgeGradient = ctx.createLinearGradient(0, 0, 0, height);
+      edgeGradient.addColorStop(0, "rgba(34, 211, 238, 0.06)"); // Top edge haze
+      edgeGradient.addColorStop(0.2, "rgba(34, 211, 238, 0)");
+      edgeGradient.addColorStop(0.8, "rgba(34, 211, 238, 0)");
+      edgeGradient.addColorStop(1, "rgba(34, 211, 238, 0.04)"); // Bottom edge haze
+      
+      ctx.fillStyle = edgeGradient;
+      ctx.fillRect(0, 0, width, height);
 
-      const blueTheme = {
-        topLine: "rgba(145, 220, 255, 0.75)",
-        topGlow: "rgba(120, 205, 255, 0.35)",
-        bottomLine: "rgba(168, 232, 255, 0.7)",
-        bottomGlow: "rgba(120, 205, 255, 0.25)"
+      // Visual parameters matching the desktop client's edge placements
+      const topBase = 12 + currentLevel * 6;
+      const bottomBase = height - 12 - currentLevel * 8;
+      const primaryAmplitude = 6 + currentLevel * 18;
+      const secondaryAmplitude = 2.6 + currentLevel * 8;
+
+      // Color scheme - gorgeous translucent cyan/teal accents
+      const cyanTheme = {
+        topLine: "rgba(34, 211, 238, 0.82)",
+        topGlow: "rgba(34, 211, 238, 0.24)",
+        bottomLine: "rgba(6, 182, 212, 0.78)",
+        bottomGlow: "rgba(6, 182, 212, 0.2)"
       };
 
-      // Draw Top Waves
+      // Frequencies scaled for a long, silky wave shape
+      const topFreq1 = (Math.PI * 1.8) / width;
+      const topFreq2 = (Math.PI * 2.8) / width;
+      const bottomFreq1 = (Math.PI * 2.0) / width;
+      const bottomFreq2 = (Math.PI * 3.0) / width;
+
+      // Draw Top Waves (Soft fill + primary line + secondary line)
       drawSoftFill(ctx, {
         width,
         time,
         yBase: topBase,
         amplitude: primaryAmplitude * 0.6,
-        frequency: 0.0064,
+        frequency: topFreq1 * 0.9,
         speed: 0.28,
-        color: blueTheme.topGlow,
-        thickness: 28,
-        alphaScale: glowScale,
+        color: "rgba(34, 211, 238, 0.08)",
+        thickness: 24,
+        alphaScale: 1.0,
         invert: true
       });
       drawWave(ctx, {
@@ -72,69 +129,65 @@ export function AmbientWavePreview({ active }: { active: boolean }) {
         time,
         yBase: topBase,
         amplitude: primaryAmplitude * 0.6,
-        frequency: 0.0088,
+        frequency: topFreq1,
         speed: 0.26,
-        color: blueTheme.topLine,
-        lineWidth: 2.2,
-        opacity: 0.8,
-        glowScale,
+        color: cyanTheme.topLine,
+        lineWidth: 1.1,
+        opacity: 0.78,
         invert: true
       });
       drawWave(ctx, {
         width,
         time,
-        yBase: topBase + 6,
+        yBase: topBase + 4,
         amplitude: secondaryAmplitude * 0.55,
-        frequency: 0.0112,
+        frequency: topFreq2,
         speed: 0.34,
-        color: blueTheme.topGlow,
-        lineWidth: 1.5,
-        opacity: 0.4,
-        glowScale,
+        color: cyanTheme.topGlow,
+        lineWidth: 0.8,
+        opacity: 0.35,
         invert: true
       });
 
-      // Draw Bottom Waves
+      // Draw Bottom Waves (Soft fill + primary line + secondary line)
       drawSoftFill(ctx, {
         width,
         time,
         yBase: bottomBase,
         amplitude: primaryAmplitude * 0.9,
-        frequency: 0.007,
+        frequency: bottomFreq1 * 0.85,
         speed: 0.32,
-        color: blueTheme.bottomGlow,
-        thickness: 40,
-        alphaScale: glowScale
+        color: "rgba(6, 182, 212, 0.06)",
+        thickness: 32,
+        alphaScale: 1.0
       });
       drawWave(ctx, {
         width,
         time,
         yBase: bottomBase,
         amplitude: primaryAmplitude * 0.9,
-        frequency: 0.0102,
+        frequency: bottomFreq1,
         speed: 0.34,
-        color: blueTheme.bottomLine,
-        lineWidth: 2.8,
-        opacity: 0.9,
-        glowScale
+        color: cyanTheme.bottomLine,
+        lineWidth: 1.3,
+        opacity: 0.85
       });
       drawWave(ctx, {
         width,
         time,
-        yBase: bottomBase - 8,
+        yBase: bottomBase - 5,
         amplitude: secondaryAmplitude,
-        frequency: 0.013,
+        frequency: bottomFreq2,
         speed: 0.48,
-        color: blueTheme.bottomGlow,
-        lineWidth: 1.8,
-        opacity: 0.5,
-        glowScale
+        color: cyanTheme.bottomGlow,
+        lineWidth: 0.9,
+        opacity: 0.42
       });
 
       animationFrameId = requestAnimationFrame(render);
     };
 
-    render();
+    animationFrameId = requestAnimationFrame(render);
     return () => cancelAnimationFrame(animationFrameId);
   }, [active]);
 
@@ -142,7 +195,7 @@ export function AmbientWavePreview({ active }: { active: boolean }) {
     <canvas 
       ref={canvasRef} 
       className="absolute inset-0 h-full w-full object-cover transition-opacity duration-700 bg-transparent" 
-      style={{ opacity: active ? 1 : 0.6 }}
+      style={{ opacity: active ? 1 : 0.7 }}
     />
   );
 }
@@ -157,33 +210,58 @@ interface WaveOptions {
   color: string;
   lineWidth: number;
   opacity: number;
-  glowScale?: number;
   invert?: boolean;
 }
 
+// Highly optimized vector wave drawing using multi-stroke glow layers
 function drawWave(ctx: CanvasRenderingContext2D, options: WaveOptions) {
-  const { width, time, yBase, amplitude, frequency, speed, color, lineWidth, opacity, glowScale = 1, invert = false } = options;
-  const step = 20;
+  const { width, time, yBase, amplitude, frequency, speed, color, lineWidth, opacity, invert = false } = options;
+  const step = 4; // High resolution but performant step size
   const phaseA = time * speed;
   const phaseB = time * speed * 0.52;
 
-  ctx.beginPath();
-  for (let x = 0; x <= width; x += step) {
+  // Precompute wave vertices
+  const points: { x: number; y: number }[] = [];
+  for (let x = 0; x <= width + step; x += step) {
     const waveA = Math.sin(x * frequency + phaseA);
     const waveB = Math.sin(x * frequency * 0.42 - phaseB);
     const lift = (waveA + waveB) * amplitude;
     const y = yBase + (invert ? -lift : lift);
-
-    if (x === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
+    points.push({ x, y });
   }
 
+  const buildPath = () => {
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      ctx.lineTo(points[i].x, points[i].y);
+    }
+  };
+
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  // 1. Draw outer wide soft glow (no CPU shadowBlur)
   ctx.strokeStyle = color;
-  ctx.lineWidth = lineWidth;
-  ctx.globalAlpha = opacity * glowScale;
-  ctx.shadowBlur = (24 + amplitude * 0.4) * glowScale;
-  ctx.shadowColor = color;
+  ctx.lineWidth = lineWidth * 7.5;
+  ctx.globalAlpha = opacity * 0.12;
+  buildPath();
   ctx.stroke();
+
+  // 2. Draw inner medium glow
+  ctx.lineWidth = lineWidth * 3.5;
+  ctx.globalAlpha = opacity * 0.32;
+  buildPath();
+  ctx.stroke();
+
+  // 3. Draw sharp core line
+  ctx.lineWidth = lineWidth;
+  ctx.globalAlpha = opacity;
+  buildPath();
+  ctx.stroke();
+
+  ctx.restore();
 }
 
 interface SoftFillOptions {
@@ -199,27 +277,41 @@ interface SoftFillOptions {
   invert?: boolean;
 }
 
+// Elegant gradient-faded soft fill mimicking the ambient haze
 function drawSoftFill(ctx: CanvasRenderingContext2D, options: SoftFillOptions) {
   const { width, time, yBase, amplitude, frequency, speed, color, thickness, alphaScale = 1, invert = false } = options;
-  const step = 24;
+  const step = 6; // slightly larger step for background fill optimization
   const phaseA = time * speed;
   const phaseB = time * speed * 0.45;
 
-  ctx.beginPath();
-  ctx.moveTo(0, yBase);
-  for (let x = 0; x <= width; x += step) {
+  const points: { x: number; y: number }[] = [];
+  for (let x = 0; x <= width + step; x += step) {
     const waveA = Math.sin(x * frequency + phaseA);
     const waveB = Math.sin(x * frequency * 0.35 - phaseB);
     const lift = (waveA + waveB) * amplitude;
-    ctx.lineTo(x, yBase + (invert ? -lift : lift));
+    points.push({ x, y: yBase + (invert ? -lift : lift) });
   }
 
-  ctx.lineTo(width, yBase + (invert ? -thickness : thickness));
-  ctx.lineTo(0, yBase + (invert ? -thickness : thickness));
+  ctx.save();
+
+  // Create linear gradient to fade the fill to transparent at its limit
+  const fillLimitY = yBase + (invert ? -thickness : thickness);
+  const fillGradient = ctx.createLinearGradient(0, yBase, 0, fillLimitY);
+  fillGradient.addColorStop(0, color);
+  fillGradient.addColorStop(1, "rgba(0, 0, 0, 0)");
+
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+  for (let i = 1; i < points.length; i++) {
+    ctx.lineTo(points[i].x, points[i].y);
+  }
+  ctx.lineTo(width, fillLimitY);
+  ctx.lineTo(0, fillLimitY);
   ctx.closePath();
 
   ctx.globalAlpha = alphaScale;
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = color;
+  ctx.fillStyle = fillGradient;
   ctx.fill();
+
+  ctx.restore();
 }
