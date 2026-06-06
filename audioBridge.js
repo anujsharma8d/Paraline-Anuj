@@ -27,7 +27,6 @@ function createAudioBridge(sendLevel, onStatusChange = () => {}) {
   let isStopping = false;
   let recoveryTimer = null;
   let successStartTime = null;
-  let consecutiveFailures = 0;
 
   function updateStatus(nextStatus) {
     if (
@@ -100,7 +99,6 @@ function createAudioBridge(sendLevel, onStatusChange = () => {}) {
           if (!helperReady) {
             helperReady = true;
             retryCount = 0;
-            consecutiveFailures = 0;
             successStartTime = Date.now();
             clearRecoveryTimer();
 
@@ -140,6 +138,14 @@ function createAudioBridge(sendLevel, onStatusChange = () => {}) {
       });
     });
 
+    helperProcess.on("error", (err) => {
+      console.error("Failed to spawn audio helper process:", err);
+      updateStatus({
+        mode: "helper-error",
+        reason: `Failed to spawn audio helper: ${err.message}`
+      });
+    });
+
     helperProcess.on("exit", (code) => {
       helperProcess = null;
 
@@ -148,14 +154,10 @@ function createAudioBridge(sendLevel, onStatusChange = () => {}) {
         return;
       }
 
-        consecutiveFailures++;
       retryCount++;
 
       // Calculate exponential backoff delay
-      const delay = Math.min(
-        INITIAL_RETRY_DELAY * Math.pow(2, retryCount - 1),
-        MAX_RETRY_DELAY
-      );
+      const delay = calculateRetryDelay(retryCount);
 
       if (retryCount <= MAX_IMMEDIATE_RETRIES) {
         // Immediate retries with exponential backoff
@@ -241,7 +243,6 @@ function createAudioBridge(sendLevel, onStatusChange = () => {}) {
       }
 
       retryCount = 0; // Reset retry count for recovery attempt
-      consecutiveFailures = 0;
       start();
     }, RECOVERY_CHECK_INTERVAL);
   }
@@ -254,9 +255,8 @@ function createAudioBridge(sendLevel, onStatusChange = () => {}) {
   }
 
   function resetRetryCountOnSuccess() {
-    if (successStartTime && Date.now() - successStartTime > SUCCESS_RESET_THRESHOLD) {
+    if (retryCount > 0 && successStartTime && Date.now() - successStartTime > SUCCESS_RESET_THRESHOLD) {
       retryCount = 0;
-      consecutiveFailures = 0;
       console.log("Helper stable for 30s, reset retry count");
     }
   }
