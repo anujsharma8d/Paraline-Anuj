@@ -201,6 +201,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const intervalMinutes = document.getElementById('intervalMinutes');
     const dayThemeSelect = document.getElementById('dayThemeSelect');
     const nightThemeSelect = document.getElementById('nightThemeSelect');
+    const dayStartHourInput = document.getElementById('dayStartHourInput');
+    const nightStartHourInput = document.getElementById('nightStartHourInput');
+
+    function formatHour(hour) {
+        if (hour === 0) return '12 AM';
+        if (hour === 12) return '12 PM';
+        return hour > 12 ? `${hour - 12} PM` : `${hour} AM`;
+    }
+
+    function updateThemeLabels(dayStart, nightStart) {
+        const dayThemeLabel = document.getElementById('dayThemeLabel');
+        const nightThemeLabel = document.getElementById('nightThemeLabel');
+        if (dayThemeLabel) {
+            dayThemeLabel.textContent = `Daytime Theme (${formatHour(dayStart)} - ${formatHour(nightStart)}):`;
+        }
+        if (nightThemeLabel) {
+            nightThemeLabel.textContent = `Nighttime Theme (${formatHour(nightStart)} - ${formatHour(dayStart)}):`;
+        }
+    }
 
     function toggleAutoControls(isEnabled) {
         if (themeAutoControls) {
@@ -243,6 +262,32 @@ document.addEventListener('DOMContentLoaded', () => {
     if (nightThemeSelect) {
         nightThemeSelect.addEventListener('change', (e) => {
             updateAutomationSetting({ nightTheme: e.target.value });
+        });
+    }
+
+    if (dayStartHourInput) {
+        dayStartHourInput.addEventListener('change', (e) => {
+            let val = parseInt(e.target.value, 10);
+            if (isNaN(val) || val < 0 || val > 23) {
+                val = 6;
+                dayStartHourInput.value = val;
+            }
+            updateAutomationSetting({ dayStartHour: val });
+            const nightStart = nightStartHourInput ? parseInt(nightStartHourInput.value, 10) : 18;
+            updateThemeLabels(val, isNaN(nightStart) ? 18 : nightStart);
+        });
+    }
+
+    if (nightStartHourInput) {
+        nightStartHourInput.addEventListener('change', (e) => {
+            let val = parseInt(e.target.value, 10);
+            if (isNaN(val) || val < 0 || val > 23) {
+                val = 18;
+                nightStartHourInput.value = val;
+            }
+            updateAutomationSetting({ nightStartHour: val });
+            const dayStart = dayStartHourInput ? parseInt(dayStartHourInput.value, 10) : 6;
+            updateThemeLabels(isNaN(dayStart) ? 6 : dayStart, val);
         });
     }
 
@@ -298,19 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const themeSelector = document.getElementById('theme-selector');
     themeSelector.addEventListener('change', (e) => {
         const themeId = e.target.value;
-        renderThemeSettings(themeId);
-        
-        // Load custom colors of the newly selected theme if they exist, or fall back to global custom colors
-        const themeData = cachedSettings[themeId] || {};
-        if (themeData.customColors && themeData.customColors.length === 3) {
-            color1.value = themeData.customColors[0];
-            color2.value = themeData.customColors[1];
-            color3.value = themeData.customColors[2];
-        } else if (cachedSettings.customColors && cachedSettings.customColors.length === 3) {
-            color1.value = cachedSettings.customColors[0];
-            color2.value = cachedSettings.customColors[1];
-            color3.value = cachedSettings.customColors[2];
-        }
+        syncThemeUI(themeId);
 
         // Also trigger an update to actually switch the active visualizer theme
         if (window.visualizerSettings) {
@@ -389,7 +422,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnExportThemeProfile = document.getElementById('btn-export-theme-profile');
     const btnImportThemeProfile = document.getElementById('btn-import-theme-profile');
     const btnResetThemeProfile = document.getElementById('btn-reset-theme-profile');
-    
+    const btnDuplicateThemeProfile = document.getElementById("btnDuplicateThemeProfile");
+
+    // Names that must not be used as object keys because they shadow prototype
+    // properties, which would allow an attacker to corrupt the JS execution
+    // context of the settings window via a crafted localStorage value.
+    const RESERVED_PRESET_NAMES = new Set([
+        "__proto__", "constructor", "prototype",
+        "toString", "valueOf", "hasOwnProperty",
+        "isPrototypeOf", "propertyIsEnumerable",
+        "toLocaleString", "__defineGetter__", "__defineSetter__",
+        "__lookupGetter__", "__lookupSetter__"
+    ]);
+
+    function isSafePresetName(name) {
+        return (
+            typeof name === "string" &&
+            name.length > 0 &&
+            name.length <= 64 &&
+            !RESERVED_PRESET_NAMES.has(name)
+        );
+    }
 
     let presets = {
         "Ocean Blue": ["#00f2fe", "#4facfe", "#8ee2ff"],
@@ -400,7 +453,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load from local storage if available
     try {
         const savedPresets = localStorage.getItem('paraline_presets');
-        if (savedPresets) presets = JSON.parse(savedPresets);
+        if (savedPresets) {
+            const parsed = JSON.parse(savedPresets);
+            // Only accept plain objects with safe keys and array values.
+            if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
+                const sanitized = {};
+                for (const [key, val] of Object.entries(parsed)) {
+                    if (isSafePresetName(key) && Array.isArray(val) && val.length === 3) {
+                        sanitized[key] = val;
+                    }
+                }
+                presets = sanitized;
+            }
+        }
     } catch(e) {}
 
     function updatePresetDropdown() {
@@ -428,7 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     savePresetBtn.addEventListener('click', () => {
         const presetName = presetNameInput.value.trim();
-        if (presetName !== "") {
+        if (presetName !== "" && isSafePresetName(presetName)) {
             presets[presetName] = [color1.value, color2.value, color3.value];
             updatePresetDropdown();
             presetSelector.value = presetName;
@@ -485,6 +550,37 @@ refreshThemeProfiles();
         document.getElementById('val-customSpeed').textContent = `${(e.target.value / 10).toFixed(1)}`;
         dispatchCustomUpdate();
     });
+
+    function syncThemeUI(themeId) {
+        renderThemeSettings(themeId);
+        
+        // Load custom colors of the newly selected theme if they exist, or fall back to global custom colors
+        const themeData = cachedSettings[themeId] || {};
+        if (themeData.customColors && themeData.customColors.length === 3) {
+            color1.value = themeData.customColors[0];
+            color2.value = themeData.customColors[1];
+            color3.value = themeData.customColors[2];
+        } else if (cachedSettings.customColors && cachedSettings.customColors.length === 3) {
+            color1.value = cachedSettings.customColors[0];
+            color2.value = cachedSettings.customColors[1];
+            color3.value = cachedSettings.customColors[2];
+        } else {
+            color1.value = "#00f2fe";
+            color2.value = "#4facfe";
+            color3.value = "#8ee2ff";
+        }
+        
+        // Load custom sliders
+        thicknessSlider.value = themeData.customThickness || 4;
+        gapSlider.value = themeData.customGap || 7;
+        sensitivitySlider.value = themeData.customSensitivity || 30;
+        speedSlider.value = themeData.customSpeed || 30;
+        
+        document.getElementById('val-customThickness').textContent = thicknessSlider.value;
+        document.getElementById('val-customGap').textContent = gapSlider.value;
+        document.getElementById('val-customSensitivity').textContent = (sensitivitySlider.value / 10).toFixed(1);
+        document.getElementById('val-customSpeed').textContent = (speedSlider.value / 10).toFixed(1);
+    }
 
     // ----------------------------------------
     // AUTO-SAVE / IPC INTEGRATION
@@ -610,6 +706,26 @@ refreshThemeProfiles();
             refreshThemeProfiles();
         });
 
+        btnDuplicateThemeProfile.addEventListener("click", async () => {
+            const selectedProfile = themeProfileSelector.value;
+            if (!selectedProfile) return;
+
+            try {
+                const result = await window.paralineApp.duplicateThemeProfile(selectedProfile);
+
+                if (!result || !result.success) {
+                    alert(result?.error || "Failed to duplicate profile");
+                    return;
+                }
+
+                alert(`Profile duplicated as "${result.profileName}"`);
+                refreshThemeProfiles();
+            } catch (error) {
+                alert("Failed to duplicate profile");
+                console.error(error);
+            }
+        });
+
         btnExportThemeProfile.addEventListener('click', async () => {
             const selectedProfile = themeProfileSelector.value;
 
@@ -708,9 +824,10 @@ refreshThemeProfiles();
             
             if (settings.selectedTheme) {
                 themeSelector.value = settings.selectedTheme;
-                renderThemeSettings(settings.selectedTheme);
+                syncThemeUI(settings.selectedTheme);
             } else {
-                renderThemeSettings("ambientWave");
+                themeSelector.value = "ambientWave";
+                syncThemeUI("ambientWave");
             }
             
             if (settings.performanceMode) {
@@ -750,6 +867,15 @@ refreshThemeProfiles();
                 if (nightThemeSelect) {
                     nightThemeSelect.value = automation.nightTheme || "reactiveBorder";
                 }
+                const dayStart = automation.dayStartHour !== undefined ? automation.dayStartHour : 6;
+                const nightStart = automation.nightStartHour !== undefined ? automation.nightStartHour : 18;
+                if (dayStartHourInput) {
+                    dayStartHourInput.value = dayStart;
+                }
+                if (nightStartHourInput) {
+                    nightStartHourInput.value = nightStart;
+                }
+                updateThemeLabels(dayStart, nightStart);
             }
 
             // Load focus mode settings
@@ -796,6 +922,13 @@ refreshThemeProfiles();
         // Realtime dynamic synchronization when toggled from the tray context menu
         window.visualizerSettings.onChange((nextSettings) => {
             Object.assign(cachedSettings, nextSettings);
+
+            if (nextSettings.selectedTheme !== undefined) {
+                if (themeSelector.value !== nextSettings.selectedTheme) {
+                    themeSelector.value = nextSettings.selectedTheme;
+                    syncThemeUI(nextSettings.selectedTheme);
+                }
+            }
             
             // Sync theme automation properties if updated from outside
             if (nextSettings.themeAutomation) {
@@ -813,6 +946,15 @@ refreshThemeProfiles();
                 if (nightThemeSelect && automation.nightTheme !== undefined) {
                     nightThemeSelect.value = automation.nightTheme;
                 }
+                if (dayStartHourInput && automation.dayStartHour !== undefined) {
+                    dayStartHourInput.value = automation.dayStartHour;
+                }
+                if (nightStartHourInput && automation.nightStartHour !== undefined) {
+                    nightStartHourInput.value = automation.nightStartHour;
+                }
+                const dayStart = automation.dayStartHour !== undefined ? automation.dayStartHour : (cachedSettings.themeAutomation?.dayStartHour ?? 6);
+                const nightStart = automation.nightStartHour !== undefined ? automation.nightStartHour : (cachedSettings.themeAutomation?.nightStartHour ?? 18);
+                updateThemeLabels(dayStart, nightStart);
             }
 
             // Sync Focus Mode settings

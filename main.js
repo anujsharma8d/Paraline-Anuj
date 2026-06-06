@@ -421,7 +421,25 @@ function resetAllSettings() {
   sendVisualizerSettings();
   refreshTrayMenu();
 }
+// Reserved JavaScript property names that must not be used as object keys.
+// Using these as keys on a plain object pollutes Object.prototype and affects
+// every plain object created in the same process for the rest of its lifetime.
+const RESERVED_PROFILE_NAMES = new Set(["__proto__", "constructor", "prototype"]);
+
+// Allowlist pattern: profile names may only contain letters, digits,
+// spaces, hyphens, underscores, and parentheses (max 64 chars).
+const SAFE_PROFILE_NAME_RE = /^[A-Za-z0-9 _\-()À-ɏ]{1,64}$/;
+
+function isValidProfileName(name) {
+  if (typeof name !== "string" || name.trim() === "") return false;
+  if (RESERVED_PROFILE_NAMES.has(name)) return false;
+  return SAFE_PROFILE_NAME_RE.test(name);
+}
+
 function saveThemeProfile(profileName) {
+  if (!isValidProfileName(profileName)) {
+    return null;
+  }
   const profiles = settingsStore.loadProfiles();
 
   profiles[profileName] = visualizerSettings;
@@ -431,7 +449,42 @@ function saveThemeProfile(profileName) {
   return profiles;
 }
 
+function duplicateThemeProfile(profileName) {
+    const profiles = settingsStore.loadProfiles();
+
+    if (!profiles[profileName]) {
+        return {
+            success: false,
+            error: "Profile not found"
+        };
+    }
+
+    let newName = `${profileName} (Copy)`;
+    let counter = 2;
+
+    while (profiles[newName]) {
+        newName = `${profileName} (Copy ${counter})`;
+        counter++;
+    }
+
+    const duplicatedProfile = JSON.parse(
+        JSON.stringify(profiles[profileName])
+    );
+
+    profiles[newName] = sanitizeSettings(duplicatedProfile);
+
+    settingsStore.saveProfiles(profiles);
+
+    return {
+        success: true,
+        profileName: newName
+    };
+}
+
 function loadThemeProfile(profileName) {
+  if (!isValidProfileName(profileName)) {
+    return null;
+  }
   const profiles = settingsStore.loadProfiles();
 
   if (!profiles[profileName]) {
@@ -447,6 +500,9 @@ function loadThemeProfile(profileName) {
 }
 
 function deleteThemeProfile(profileName) {
+  if (!isValidProfileName(profileName)) {
+    return settingsStore.loadProfiles();
+  }
   const profiles = settingsStore.loadProfiles();
 
   delete profiles[profileName];
@@ -456,11 +512,42 @@ function deleteThemeProfile(profileName) {
   return profiles;
 }
 
+function duplicateThemeProfile(srcName, destName) {
+  if (
+    typeof srcName !== "string" || srcName.trim() === "" ||
+    typeof destName !== "string" || destName.trim() === "" ||
+    destName === "__proto__" || destName === "constructor" || destName === "prototype"
+  ) {
+    return null;
+  }
+  const profiles = settingsStore.loadProfiles();
+  if (!profiles[srcName]) {
+    return null;
+  }
+  profiles[destName] = JSON.parse(JSON.stringify(profiles[srcName]));
+  settingsStore.saveProfiles(profiles);
+  return profiles;
+}
+
 function getThemeProfiles() {
   return settingsStore.loadProfiles();
 }
 
+// Allowlist of URL schemes that may be passed to shell.openExternal.
+// Any other scheme (e.g. ms-settings:, file:, javascript:) is silently
+// rejected to prevent OS-level command execution via registered protocols.
+const ALLOWED_EXTERNAL_SCHEMES = new Set(["https:", "http:"]);
+
 function openExternalUrl(url) {
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return;
+  }
+  if (!ALLOWED_EXTERNAL_SCHEMES.has(parsed.protocol)) {
+    return;
+  }
   shell.openExternal(url).catch(() => {
     // Ignore shell open failures from tray actions.
   });
@@ -1384,10 +1471,6 @@ app.whenReady().then(() => {
     return getRendererSettings();
   });
 
-  ipcMain.on("visualizer-settings:update", (event, patch) => {
-    updateSettings(patch);
-  });
-
   ipcMain.on("visualizer-action", (event, { action, data }) => {
     if (action === "toggle-paused") {
       togglePaused();
@@ -1459,6 +1542,10 @@ app.whenReady().then(() => {
     return getRendererSettings();
   });
 
+  ipcMain.handle("theme-profiles:duplicate", async (_, profileName) => {
+    return duplicateThemeProfile(profileName);
+  });
+
   ipcMain.handle("theme-profiles:reset-current", () => {
     resetCurrentThemeSettings();
     return getRendererSettings();
@@ -1497,6 +1584,37 @@ app.whenReady().then(() => {
     return { success: true };
   });
 
+  ipcMain.handle("settings:export-all", async () => {
+    const backup = {
+        version: 1,
+        settings: settingsStore.load(),
+        profiles: settingsStore.loadProfiles()
+    };
+    const dialogParent = settingsWindow && !settingsWindow.isDestroyed()
+      ? settingsWindow
+      : BrowserWindow.getFocusedWindow();
+    const result = await dialog.showSaveDialog(dialogParent, {
+      title: "Export Settings Backup",
+      defaultPath: "paraline-settings-backup.json",
+      filters: [
+        {
+          name: "JSON Files",
+          extensions: ["json"]
+        }
+      ]
+    });
+
+    if (result.canceled || !result.filePath) {
+      return { success: false };
+    }
+
+    require("fs").writeFileSync(
+      result.filePath,
+      JSON.stringify(backup, null, 2)
+    );
+
+    return { success: true };
+  });
   ipcMain.handle("theme-profiles:import", async () => {
     try {
       const dialogParent = settingsWindow && !settingsWindow.isDestroyed()
@@ -1538,7 +1656,11 @@ app.whenReady().then(() => {
       // Sanitize the imported profile to prevent prototype pollution and arbitrary property injection
       const sanitizedProfile = sanitizeSettings(importedProfile);
 
-      const profileName = path.basename(filePath, ".json");
+      const rawProfileName = path.basename(filePath, ".json");
+      if (!isValidProfileName(rawProfileName)) {
+        return { success: false, error: "Invalid profile name: the filename contains reserved or disallowed characters." };
+      }
+      const profileName = rawProfileName;
       const profiles = settingsStore.loadProfiles();
 
       profiles[profileName] = sanitizedProfile;
@@ -1550,6 +1672,93 @@ app.whenReady().then(() => {
       };
     } catch (error) {
       console.error("Failed to import theme profile:", error);
+      return { success: false, error: error.message };
+    }
+  });
+  
+  ipcMain.handle("settings:import-all", async () => {
+    try {
+      const dialogParent = settingsWindow && !settingsWindow.isDestroyed()
+        ? settingsWindow
+        : BrowserWindow.getFocusedWindow();
+
+      const result = await dialog.showOpenDialog(dialogParent, {
+        title: "Import Settings Backup",
+        filters: [
+          {
+            name: "JSON Files",
+            extensions: ["json"]
+          }
+        ],
+        properties: ["openFile"]
+      });
+
+      if (result.canceled || result.filePaths.length === 0) {
+        return { success: false };
+      }
+
+      const filePath = result.filePaths[0];
+
+      // Check file size (100KB limit to prevent DoS attacks)
+      const stats = fs.statSync(filePath);
+      const MAX_FILE_SIZE = 100 * 1024; // 100KB
+      if (stats.size > MAX_FILE_SIZE) {
+        return { success: false, error: "File too large. Maximum size is 100KB." };
+      }
+
+      const importedBackup = JSON.parse(
+          require("fs").readFileSync(filePath, "utf8")
+      );
+
+      if (
+          !importedBackup ||
+          typeof importedBackup !== "object" ||
+          Array.isArray(importedBackup)
+      ) {
+          return { success: false, error: "Invalid backup format" };
+      }
+      const cleanSettings = sanitizeSettings(
+          importedBackup.settings || {}
+      );
+
+      settingsStore.save(cleanSettings);
+
+    const safeProfiles = {};
+
+    for (const [name, profile] of Object.entries(importedBackup.profiles || {})) {
+
+        if (
+            typeof name !== "string" ||
+            name === "__proto__" ||
+            name === "constructor" ||
+            name === "prototype"
+        ) {
+            continue;
+        }
+
+        safeProfiles[name] = sanitizeSettings(profile || {});
+    }
+
+    settingsStore.saveProfiles(safeProfiles);
+
+      visualizerSettings = cleanSettings;
+
+      applyStartupSettings(visualizerSettings.launchOnStartup);
+      applyFocusModeState();
+
+      if (themeAgent) {
+          themeAgent.start();
+      }
+
+      sendVisualizerSettings();
+      refreshTrayMenu();
+
+      return {                                    
+        success: true,
+      };
+    }
+    catch (error) {
+      console.error("Failed to import settings backup:", error);
       return { success: false, error: error.message };
     }
   });
