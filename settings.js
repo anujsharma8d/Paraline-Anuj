@@ -246,6 +246,55 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ----------------------------------------
+    // FOCUS MODE BINDINGS
+    // ----------------------------------------
+    const focusModeEnabledCheckbox = document.getElementById('focus-mode-enabled-checkbox');
+    const focusModeControls = document.getElementById('focusModeControls');
+    const focusModeDimOpacitySlider = document.getElementById('focus-mode-dim-opacity-slider');
+    const focusModeTimeoutSlider = document.getElementById('focus-mode-timeout-slider');
+
+    function toggleFocusModeControls(isEnabled) {
+        if (focusModeControls) {
+            focusModeControls.style.display = isEnabled ? 'block' : 'none';
+        }
+    }
+
+    function updateFocusModeSetting(patch) {
+        if (window.visualizerSettings) {
+            const currentFocusMode = cachedSettings.focusMode || {};
+            const nextFocusMode = { ...currentFocusMode, ...patch };
+            cachedSettings.focusMode = nextFocusMode; // Optimistic local cache update!
+            window.visualizerSettings.update({
+                focusMode: nextFocusMode
+            });
+        }
+    }
+
+    if (focusModeEnabledCheckbox) {
+        focusModeEnabledCheckbox.addEventListener('change', (e) => {
+            const isChecked = e.target.checked;
+            toggleFocusModeControls(isChecked);
+            updateFocusModeSetting({ enabled: isChecked });
+        });
+    }
+
+    if (focusModeDimOpacitySlider) {
+        focusModeDimOpacitySlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            document.getElementById('val-focus-mode-dim-opacity').textContent = val.toFixed(2);
+            updateFocusModeSetting({ dimOpacity: val });
+        });
+    }
+
+    if (focusModeTimeoutSlider) {
+        focusModeTimeoutSlider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value, 10);
+            document.getElementById('val-focus-mode-timeout').textContent = val;
+            updateFocusModeSetting({ idleTimeout: val });
+        });
+    }
+
     const themeSelector = document.getElementById('theme-selector');
     themeSelector.addEventListener('change', (e) => {
         const themeId = e.target.value;
@@ -702,6 +751,23 @@ refreshThemeProfiles();
                     nightThemeSelect.value = automation.nightTheme || "reactiveBorder";
                 }
             }
+
+            // Load focus mode settings
+            if (settings.focusMode) {
+                const fm = settings.focusMode;
+                if (focusModeEnabledCheckbox) {
+                    focusModeEnabledCheckbox.checked = !!fm.enabled;
+                    toggleFocusModeControls(fm.enabled);
+                }
+                if (focusModeDimOpacitySlider) {
+                    focusModeDimOpacitySlider.value = fm.dimOpacity !== undefined ? fm.dimOpacity : 0.1;
+                    document.getElementById('val-focus-mode-dim-opacity').textContent = parseFloat(focusModeDimOpacitySlider.value).toFixed(2);
+                }
+                if (focusModeTimeoutSlider) {
+                    focusModeTimeoutSlider.value = fm.idleTimeout !== undefined ? fm.idleTimeout : 5;
+                    document.getElementById('val-focus-mode-timeout').textContent = focusModeTimeoutSlider.value;
+                }
+            }
             
             // set custom variables into UI if they exist globally or on the active theme
             const activeThemeData = settings[settings.selectedTheme] || {};
@@ -746,6 +812,23 @@ refreshThemeProfiles();
                 }
                 if (nightThemeSelect && automation.nightTheme !== undefined) {
                     nightThemeSelect.value = automation.nightTheme;
+                }
+            }
+
+            // Sync Focus Mode settings
+            if (nextSettings.focusMode) {
+                const fm = nextSettings.focusMode;
+                if (focusModeEnabledCheckbox && fm.enabled !== undefined) {
+                    focusModeEnabledCheckbox.checked = !!fm.enabled;
+                    toggleFocusModeControls(fm.enabled);
+                }
+                if (focusModeDimOpacitySlider && fm.dimOpacity !== undefined) {
+                    focusModeDimOpacitySlider.value = fm.dimOpacity;
+                    document.getElementById('val-focus-mode-dim-opacity').textContent = parseFloat(fm.dimOpacity).toFixed(2);
+                }
+                if (focusModeTimeoutSlider && fm.idleTimeout !== undefined) {
+                    focusModeTimeoutSlider.value = fm.idleTimeout;
+                    document.getElementById('val-focus-mode-timeout').textContent = fm.idleTimeout;
                 }
             }
 
