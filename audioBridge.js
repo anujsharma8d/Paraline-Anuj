@@ -14,12 +14,20 @@ function createAudioBridge(sendLevel, onStatusChange = () => {}) {
   let lastStatusUpdate = 0;
 
   let retryCount = 0;
-  const MAX_RETRIES = 3;
+  const MAX_IMMEDIATE_RETRIES = 3;
+  const MAX_TOTAL_RETRIES = 10;
+  const INITIAL_RETRY_DELAY = 2000; // 2 seconds
+  const MAX_RETRY_DELAY = 30000; // 30 seconds
+  const RECOVERY_CHECK_INTERVAL = 60000; // 1 minute
+  const SUCCESS_RESET_THRESHOLD = 30000; // Reset retry count after 30s of success
 
   let helperReady = false;
   let stdoutBuffer = "";
   const MAX_STDOUT_BUFFER_BYTES = 64 * 1024;
   let isStopping = false;
+  let recoveryTimer = null;
+  let successStartTime = null;
+  let consecutiveFailures = 0;
 
   function updateStatus(nextStatus) {
     if (
@@ -92,11 +100,17 @@ function createAudioBridge(sendLevel, onStatusChange = () => {}) {
           if (!helperReady) {
             helperReady = true;
             retryCount = 0;
+            consecutiveFailures = 0;
+            successStartTime = Date.now();
+            clearRecoveryTimer();
 
             updateStatus({
               mode: "helper",
               reason: "C# helper process connected."
             });
+          } else {
+            // Reset retry count if helper has been stable
+            resetRetryCountOnSuccess();
           }
 
           if (message.type === "level" && typeof message.value === "number") {
@@ -130,39 +144,76 @@ function createAudioBridge(sendLevel, onStatusChange = () => {}) {
       helperProcess = null;
 
       if (isStopping) {
+        clearRecoveryTimer();
         return;
       }
 
-      if (retryCount < MAX_RETRIES) {
-        retryCount++;
+        consecutiveFailures++;
+      retryCount++;
 
+      // Calculate exponential backoff delay
+      const delay = Math.min(
+        INITIAL_RETRY_DELAY * Math.pow(2, retryCount - 1),
+        MAX_RETRY_DELAY
+      );
+
+      if (retryCount <= MAX_IMMEDIATE_RETRIES) {
+        // Immediate retries with exponential backoff
         updateStatus({
           mode: "reconnecting",
-          reason: `Helper crashed. Restarting ${retryCount}/${MAX_RETRIES}`
+          reason: `Helper crashed. Restarting ${retryCount}/${MAX_IMMEDIATE_RETRIES} (retrying in ${Math.round(delay/1000)}s)`
         });
 
         setTimeout(() => {
-          start();
-        }, 2000);
+          if (!isStopping) {
+            start();
+          }
+        }, delay);
 
         return;
       }
 
+      if (retryCount <= MAX_TOTAL_RETRIES) {
+        // Extended recovery mode
+        updateStatus({
+          mode: "reconnecting",
+          reason: `Helper crashed. Extended recovery mode (${retryCount}/${MAX_TOTAL_RETRIES}). Next retry in ${Math.round(delay/1000)}s`
+        });
+
+        setTimeout(() => {
+          if (!isStopping) {
+            start();
+          }
+        }, delay);
+
+        return;
+      }
+
+      // Permanent failure - schedule periodic recovery attempts
       updateStatus({
         mode: "simulated",
         reason:
           `Audio helper stopped permanently (exit ${code}).\n` +
-          "Max retry limit reached."
+          `Max retry limit reached (${MAX_TOTAL_RETRIES} attempts).\n` +
+          "Will attempt recovery every minute."
       });
+
+      // Schedule periodic recovery attempts
+      scheduleRecovery();
     });
   }
 
   function stop() {
     isStopping = true;
+    clearRecoveryTimer();
+    
     if (helperProcess) {
       helperProcess.kill();
       helperProcess = null;
     }
+
+    helperReady = false;
+    successStartTime = null;
 
     updateStatus({
       mode: "simulated",
@@ -172,6 +223,42 @@ function createAudioBridge(sendLevel, onStatusChange = () => {}) {
 
   function getStatus() {
     return helperStatus;
+  }
+
+  function calculateRetryDelay(attemptNumber) {
+    return Math.min(
+      INITIAL_RETRY_DELAY * Math.pow(2, attemptNumber - 1),
+      MAX_RETRY_DELAY
+    );
+  }
+
+  function scheduleRecovery() {
+    clearRecoveryTimer();
+
+    recoveryTimer = setTimeout(() => {
+      if (isStopping) {
+        return;
+      }
+
+      retryCount = 0; // Reset retry count for recovery attempt
+      consecutiveFailures = 0;
+      start();
+    }, RECOVERY_CHECK_INTERVAL);
+  }
+
+  function clearRecoveryTimer() {
+    if (recoveryTimer) {
+      clearTimeout(recoveryTimer);
+      recoveryTimer = null;
+    }
+  }
+
+  function resetRetryCountOnSuccess() {
+    if (successStartTime && Date.now() - successStartTime > SUCCESS_RESET_THRESHOLD) {
+      retryCount = 0;
+      consecutiveFailures = 0;
+      console.log("Helper stable for 30s, reset retry count");
+    }
   }
 
   return {
