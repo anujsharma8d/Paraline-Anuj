@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Heart } from "lucide-react";
 import { GITHUB_URL } from "@/lib/paraline-api";
 import { Logo } from "./Logo";
 import { 
@@ -35,29 +34,12 @@ const Github = ({ className, strokeWidth = 2 }: { className?: string; strokeWidt
   </svg>
 );
 
-const Twitter = ({ className, strokeWidth = 2 }: { className?: string; strokeWidth?: number }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={strokeWidth}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-  >
-    <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
-  </svg>
-);
-
 export function Footer() {
   return (
     <footer className="relative mt-auto w-full border-t border-white/5 bg-transparent backdrop-blur-md max-w-7xl mx-auto px-6 lg:px-8">
       <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-6 px-6 py-6 md:flex-row lg:px-8">
 
-        {/* Left Side: Copyright */}
+        {/* Left Side */}
         <div className="flex flex-col items-start justify-center md:items-start md:text-left">
           <Logo />
           <span className="mt-2 text-[10px] font-medium tracking-[0.15em] text-muted/80 uppercase">
@@ -90,23 +72,12 @@ export function Footer() {
             <a href="/terms" className="flex justify-center items-center gap-2 text-[15px] transition-transform duration-300 hover:translate-x-1"><FileText />Terms & Conditions</a>
             <a href="/privacy" className="flex justify-center items-center gap-2 text-[15px] transition-transform duration-300 hover:translate-x-1"><ShieldCheck />Privacy Policy</a>
           </div>
-
-
-          {/* <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className="text-[11px] font-semibold tracking-[0.15em] text-muted/80 transition-colors hover:text-white uppercase">
-            Contact / GitHub
-          </a>
-          <a href="/terms" className="text-[11px] font-semibold tracking-[0.15em] text-muted/80 transition-colors hover:text-white uppercase">
-            Terms & Conditions
-          </a>
-          <a href="/privacy" className="text-[11px] font-semibold tracking-[0.15em] text-muted/80 transition-colors hover:text-white uppercase">
-            Privacy Policy
-          </a>
-          <a href="/faq" className="text-[11px] font-semibold tracking-[0.15em] text-muted/80 transition-colors hover:text-white uppercase">
-            FAQ
-          </a> */}
         </div>
       </div>
+      
+      {/* Seperator */}
       <div className="border-t border-white/5"></div>
+      
           {/* Bottom */}
           <div className="p-3 text-[11px] font-medium tracking-[0.15em] text-muted/80 hover:text-white transition-colors cursor-default text-center">
               <div>
