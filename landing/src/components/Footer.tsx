@@ -58,14 +58,14 @@ export function Footer() {
           </div>
           <div className="flex flex-col items-start gap-6">
             <h1 className="text-[12px] font-extrabold uppercase tracking-[0.25em] text-cyan-400/80">Resources</h1>
-            <a href="/requirements" className="flex justify-center items-center gap-2 text-[15px] transition-transform duration-300 hover:translate-x-1"><Laptop />System Requirement</a>
+            <a href="/requirements" className="flex justify-center items-center gap-2 text-[15px] transition-transform duration-300 hover:translate-x-1"><Laptop />System Requirements</a>
             <a href="/faq" className="flex justify-center items-center gap-2 text-[15px] transition-transform duration-300 hover:translate-x-1"><HelpCircle />FAQ</a>
             <a href="/installation" className="flex justify-center items-center gap-2 text-[15px] transition-transform duration-300 hover:translate-x-1"><Download/>Installation guide</a>
           </div>
           <div className="flex flex-col items-start gap-6">
             <h1 className="text-[12px] font-extrabold uppercase tracking-[0.25em] text-green-400/80">Support</h1>
             <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className="flex justify-center items-center gap-2 text-[15px] transition-transform duration-300 hover:translate-x-1"><HeadphonesIcon />Contact Us</a>
-            <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className="flex justify-center items-center gap-2 text-[15px] transition-transform duration-300 hover:translate-x-1"><Github />Github</a>
+            <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className="flex justify-center items-center gap-2 text-[15px] transition-transform duration-300 hover:translate-x-1"><Github />GitHub</a>
           </div>
           <div className="flex flex-col items-start gap-6">
             <h1 className="text-[12px] font-extrabold uppercase tracking-[0.25em] text-pink-400/80">Legal</h1>
